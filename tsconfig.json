@@ -4,6 +4,7 @@
         "outDir": "dist",
         "target": "ES6",
         "noImplicitAny": true,
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "module": "NodeNext"
     }
 }
