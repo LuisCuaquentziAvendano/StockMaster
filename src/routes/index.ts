@@ -4,7 +4,7 @@ import inventories from './inventories.routes';
 import products from './products.routes';
 import sales from './sales.routes';
 import middlewares from '../middlewares';
-import roles from '../constants/roles';
+import roles from '../utils/roles';
 
 const router = Router();
 router.use(json());

@@ -33,7 +33,7 @@ class UsersController {
         // use createToken
     }
 
-    static createToken(): string {
+    private static createToken(): string {
         return '';
     }
 }

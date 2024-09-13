@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import ProductsController from '../controllers/products.controller';
 import middlewares from '../middlewares';
-import roles from '../constants/roles';
+import roles from '../utils/roles';
 
 const router = Router();
 router.get('/getProductById',
