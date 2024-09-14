@@ -1,5 +1,3 @@
-type InventorySchema = {
-    [key: string]: unknown;
-};
+type InventorySchema = Record<string, string>;
 
 export default InventorySchema;

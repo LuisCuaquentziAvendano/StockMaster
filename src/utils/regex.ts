@@ -21,7 +21,7 @@ function formatMongoString(s: string): string {
         .replace(new RegExp(/[\\"]/, 'g'), x => `\\${x}`);
     if (newString[0] == "$")
         newString = '\\$' + newString.slice(1, -1);
-    return newString;
+    return '"' + newString + '"';
 }
 
 export default {

@@ -1,38 +1,31 @@
 import Operators from '../utils/queryOperators';
+import { ParserTokens as Tokens } from '../utils/inventoryDataTypes';
 import regex from '../utils/regex';
 import InventorySchema from '../types/inventorySchema';
 
 const MONGO_OPERATORS: Record<string, (a: string, b: string, prop: InventorySchema) => string> = Object.freeze({
-    '+': (a: string, b: string, prop: InventorySchema) => `{ $add: ["${f(a, prop)}", "${f(b, prop)}"] }`,
-    '-': (a: string, b: string, prop: InventorySchema) => `{ $subtract: ["${f(a, prop)}", "${f(b, prop)}"] }`,
-    '*': (a: string, b: string, prop: InventorySchema) => `{ $multiply: ["${f(a, prop)}", "${f(b, prop)}"] }`,
-    '/': (a: string, b: string, prop: InventorySchema) => `{ $divide: ["${f(a, prop)}", "${f(b, prop)}"] }`,
-    '%': (a: string, b: string, prop: InventorySchema) => `{ $mod: ["${f(a, prop)}", "${f(b, prop)}"] }`,
-    '==': (a: string, b: string, prop: InventorySchema) => `{ $expr: { $eq: ["${f(a, prop)}", "${f(b, prop)}"] } }`,
-    '!=': (a: string, b: string, prop: InventorySchema) => `{ $expr: { $ne: ["${f(a, prop)}", "${f(b, prop)}"] } }`,
-    '<': (a: string, b: string, prop: InventorySchema) => `{ $expr: { $lt: ["${f(a, prop)}", "${f(b, prop)}"] } }`,
-    '>': (a: string, b: string, prop: InventorySchema) => `{ $expr: { $gt: ["${a}", ${b}] } }`,
-    '<=': (a: string, b: string, prop: InventorySchema) => `{ $expr: { $lte: ["${f(a, prop)}", "${f(b, prop)}"] } }`,
-    '>=': (a: string, b: string, prop: InventorySchema) => `{ $expr: { $gte: ["${f(a, prop)}", "${f(b, prop)}"] } }`,
-    'like': (a: string, b: string, prop: InventorySchema) => `{ ${a}: { $regex: "${b}" } }`,
-    'includes': (a: string, b: string, prop: InventorySchema) => `{ ${a}: { $in: ["${b}"] } }`,
+    '+': (a: string, b: string, prop: InventorySchema) => `{ $add: [${f(a, prop)}, ${f(b, prop)}] }`,
+    '-': (a: string, b: string, prop: InventorySchema) => `{ $subtract: [${f(a, prop)}, ${f(b, prop)}] }`,
+    '*': (a: string, b: string, prop: InventorySchema) => `{ $multiply: [${f(a, prop)}, ${f(b, prop)}] }`,
+    '/': (a: string, b: string, prop: InventorySchema) => `{ $divide: [${f(a, prop)}, ${f(b, prop)}] }`,
+    '%': (a: string, b: string, prop: InventorySchema) => `{ $mod: [${f(a, prop)}, ${f(b, prop)}] }`,
+    '==': (a: string, b: string, prop: InventorySchema) => `{ $expr: { $eq: [${f(a, prop)}, ${f(b, prop)}] } }`,
+    '!=': (a: string, b: string, prop: InventorySchema) => `{ $expr: { $ne: [${f(a, prop)}, ${f(b, prop)}] } }`,
+    '<': (a: string, b: string, prop: InventorySchema) => `{ $expr: { $lt: [${f(a, prop)}, ${f(b, prop)}] } }`,
+    '>': (a: string, b: string, prop: InventorySchema) => `{ $expr: { $gt: [${f(a, prop)}, ${f(b, prop)}] } }`,
+    '<=': (a: string, b: string, prop: InventorySchema) => `{ $expr: { $lte: [${f(a, prop)}, ${f(b, prop)}] } }`,
+    '>=': (a: string, b: string, prop: InventorySchema) => `{ $expr: { $gte: [${f(a, prop)}, ${f(b, prop)}] } }`,
+    'like': (a: string, b: string, prop: InventorySchema) => `{ ${a}: { $regex: ${b} } }`,
+    'includes': (a: string, b: string, prop: InventorySchema) => `{ ${a}: { $in: [${b}] } }`,
     'not': (a: string, b: string, prop: InventorySchema) => `{ $not: ${a} }`,
-    'and': (a: string, b: string, prop: InventorySchema) => `{ $and: ["${f(a, prop)}", "${f(b, prop)}"] }`,
-    'or': (a: string, b: string, prop: InventorySchema) => `{ $or: ["${f(a, prop)}", "${f(b, prop)}"] }`
+    'and': (a: string, b: string, prop: InventorySchema) => `{ $and: [${a}, ${b}] }`,
+    'or': (a: string, b: string, prop: InventorySchema) => `{ $or: [${a}, ${b}] }`
 });
 
 function f(s: string, properties: InventorySchema) {
     if (s in properties)
-        return '$' + s;
+        return '"$' + s + '"';
     return s;
-}
-
-class Tokens {
-    static readonly NUM = "0";
-    static readonly STR = "1";
-    static readonly BOOL = "2";
-    static readonly ARR = "3";
-    static readonly NULL = "4";
 }
 
 type Rule = [string, string | undefined];
@@ -70,8 +63,7 @@ class Rules {
     static readonly ARR: Rule[] = [
         [Tokens.ARR, Tokens.BOOL],
         [Tokens.ARR, Tokens.NUM],
-        [Tokens.ARR, Tokens.STR],
-        [Tokens.ARR, Tokens.NULL]
+        [Tokens.ARR, Tokens.STR]
     ];
 }
 
@@ -161,7 +153,7 @@ class Parser {
             return false;
         const b = values.pop();
         const oper = opers.pop();
-        if (oper in Operators.BOOL_UN && Rules.BOOL_UN.includes([b, undefined])) {
+        if (oper in Operators.BOOL_UN && Parser.checkTypes([b, undefined], Rules.BOOL_UN, properties)) {
             Parser.buildQuery(queryValues, oper, properties);
             values.push(Tokens.BOOL);
             return true;
@@ -169,23 +161,31 @@ class Parser {
         if (values.length === 0)
             return false;
         const a = values.pop();
-        if (oper in Operators.NUM_OPER && Rules.NUM_OPER.includes([a, b])) {
+        if (oper in Operators.NUM_OPER && Parser.checkTypes([a, b], Rules.NUM_OPER, properties)) {
             Parser.buildQuery(queryValues, oper, properties);
             values.push(Tokens.NUM);
             return true;
         }
         if (
-            (oper in Operators.BOOL_BIN && Rules.BOOL_BIN.includes([a, b]))
-            || (oper in Operators.NUM_EQ && Rules.NUM_EQ.includes([a, b]))
-            || (oper in Operators.STR && Rules.STR.includes([a, b]))
-            || (oper in Operators.EQUAL && Rules.EQUAL.includes([a, b]))
-            || (oper in Operators.ARR && Rules.ARR.includes([a, b]))
+            (oper in Operators.BOOL_BIN && Parser.checkTypes([a, b], Rules.BOOL_BIN, properties))
+            || (oper in Operators.NUM_EQ && Parser.checkTypes([a, b], Rules.NUM_EQ, properties))
+            || (oper in Operators.STR && Parser.checkTypes([a, b], Rules.STR, properties) && a in properties && !(b in properties))
+            || (oper in Operators.EQUAL && Parser.checkTypes([a, b], Rules.EQUAL, properties))
+            || (oper in Operators.ARR && Parser.checkTypes([a, b], Rules.ARR, properties) && a in properties && !(b in properties))
         ) {
             Parser.buildQuery(queryValues, oper, properties);
             values.push(Tokens.BOOL);
             return true;
         }
         return false;
+    }
+
+    private static checkTypes(pair: Rule, array: Rule[], properties: InventorySchema): boolean {
+        if (pair[0] in properties)
+            pair[0] = properties[pair[0]];
+        if (pair[1] in properties)
+            pair[1] = properties[pair[1]];
+        return array.includes(pair);
     }
 
     private static buildQuery(queryValues: string[], oper: string, properties: InventorySchema) {
