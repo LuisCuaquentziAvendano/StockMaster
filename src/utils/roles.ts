@@ -1,6 +1,6 @@
-const ADMIN_USER = 2;
-const STOCK_USER = 1;
-const QUERY_USER = 0;
+const ADMIN_USER = 'admin';
+const STOCK_USER = 'stock';
+const QUERY_USER = 'query';
 
 export default {
     ADMIN_USER,

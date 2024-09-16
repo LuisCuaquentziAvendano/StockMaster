@@ -1,20 +1,17 @@
 export class InventoryDataTypes {
-    static readonly INTEGER = '-integer-';
-    static readonly FLOAT = '-float-';
-    static readonly STRING = '-string-';
-    static readonly BOOLEAN = '-boolean-';
-    static readonly INTEGER_ARRAY = '-integer-array-';
-    static readonly FLOAT_ARRAY = '-float-array-';
-    static readonly STRING_ARRAY = '-string-array-';
-    static readonly BOOLEAN_ARRAY = '-boolean-array-';
-    static readonly IMAGE = '-image-';
-    static readonly DATETIME = '-datetime-';
+    static readonly INTEGER = '_integer_';
+    static readonly FLOAT = '_float_';
+    static readonly STRING = '_string_';
+    static readonly BOOLEAN = '_boolean_';
+    static readonly ARRAY = '_array_';
+    static readonly IMAGE = '_image_';
+    static readonly DATETIME = '_datetime_';
 }
 
 export class ParserTokens {
-    static readonly NUM = '-number-';
+    static readonly NUM = '_number_';
     static readonly STR = InventoryDataTypes.STRING;
     static readonly BOOL = InventoryDataTypes.BOOLEAN;
-    static readonly ARR = '-array-';
-    static readonly NULL = '-null-';
+    static readonly ARR = '_array_';
+    static readonly NULL = '_null_';
 }
