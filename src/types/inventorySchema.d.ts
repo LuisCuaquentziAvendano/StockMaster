@@ -1,3 +1,5 @@
-type InventorySchema = Record<string, string>;
+import { InventoryDataTypes } from "../utils/inventoryDataTypes";
+
+type InventorySchema = Record<string, InventoryDataTypes>;
 
 export default InventorySchema;

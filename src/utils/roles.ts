@@ -1,9 +1,5 @@
-const ADMIN_USER = 'admin';
-const STOCK_USER = 'stock';
-const QUERY_USER = 'query';
-
-export default {
-    ADMIN_USER,
-    STOCK_USER,
-    QUERY_USER
+export enum UserRoles {
+    ADMIN_USER = 'admin',
+    STOCK_USER = 'stock',
+    QUERY_USER = 'query'
 }

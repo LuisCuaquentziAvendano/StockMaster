@@ -1,4 +1,4 @@
-class Operators {
+export class Operators {
     static readonly TRUE = 'true';
     static readonly FALSE = 'false';
     static readonly NULL = 'null';
@@ -44,5 +44,3 @@ class Operators {
         ...Operators.BOOL_BIN
     });
 }
-
-export default Operators;

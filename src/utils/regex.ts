@@ -1,4 +1,4 @@
-import Operators from "./queryOperators";
+import { Operators } from "./queryOperators";
 
 const STR = /'[^']*'/;
 const FIELD = /[a-z][a-z0-9_]*/;
@@ -24,6 +24,10 @@ function formatMongoString(s: string): string {
     return '"' + newString + '"';
 }
 
+function formatInsensitiveCase(s: string): string {
+    return s.toLowerCase();
+}
+
 export default {
     STR,
     FIELD,
@@ -32,5 +36,6 @@ export default {
     SPACE,
     isType,
     getTokens,
-    formatMongoString
+    formatMongoString,
+    formatInsensitiveCase
 }

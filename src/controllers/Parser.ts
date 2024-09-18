@@ -1,4 +1,4 @@
-import Operators from '../utils/queryOperators';
+import { Operators } from '../utils/queryOperators';
 import { ParserTokens as Tokens } from '../utils/inventoryDataTypes';
 import regex from '../utils/regex';
 import InventorySchema from '../types/inventorySchema';
@@ -108,7 +108,7 @@ class Parser {
                 queryValues.push(regex.formatMongoString(token));
                 continue;
             }
-            token = token.toLowerCase();
+            token = regex.formatInsensitiveCase(token);
             if (token === Operators.TRUE || token === Operators.FALSE) {
                 values.push(Tokens.BOOL);
                 queryValues.push(token);

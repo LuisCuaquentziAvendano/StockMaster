@@ -1,17 +1,17 @@
-export class InventoryDataTypes {
-    static readonly INTEGER = '_integer_';
-    static readonly FLOAT = '_float_';
-    static readonly STRING = '_string_';
-    static readonly BOOLEAN = '_boolean_';
-    static readonly ARRAY = '_array_';
-    static readonly IMAGE = '_image_';
-    static readonly DATETIME = '_datetime_';
+export enum InventoryDataTypes {
+    INTEGER = '_integer',
+    FLOAT = '_float',
+    STRING = '_string',
+    BOOLEAN = '_boolean',
+    ARRAY = '_array',
+    IMAGE = '_image',
+    DATETIME = '_datetime'
 }
 
-export class ParserTokens {
-    static readonly NUM = '_number_';
-    static readonly STR = InventoryDataTypes.STRING;
-    static readonly BOOL = InventoryDataTypes.BOOLEAN;
-    static readonly ARR = '_array_';
-    static readonly NULL = '_null_';
+export enum ParserTokens {
+    NUM = '_number',
+    STR = InventoryDataTypes.STRING,
+    BOOL = InventoryDataTypes.BOOLEAN,
+    ARR = '_array',
+    NULL = '_null'
 }
