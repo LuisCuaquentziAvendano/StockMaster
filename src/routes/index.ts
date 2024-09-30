@@ -4,7 +4,7 @@ import inventories from './inventories.routes';
 import products from './products.routes';
 import sales from './sales.routes';
 import middlewares from '../middlewares';
-import { UserRoles } from '../utils/roles';
+import { UserRoles } from '../types/userRoles';
 
 const router = Router();
 router.use(json());
@@ -17,7 +17,7 @@ router.use('/users', users);
 router.use('/inventories',
     middlewares.validateToken,
     middlewares.getInventory,
-    middlewares.validateRole([UserRoles.ADMIN_USER]),
+    middlewares.validateRole([UserRoles.ADMIN]),
     inventories);
 router.use('/products',
     middlewares.validateToken,
@@ -26,7 +26,7 @@ router.use('/products',
 router.use('/sales',
     middlewares.validateToken,
     middlewares.getInventory,
-    middlewares.validateRole([UserRoles.ADMIN_USER, UserRoles.STOCK_USER, UserRoles.QUERY_USER]),
+    middlewares.validateRole([UserRoles.ADMIN, UserRoles.STOCK, UserRoles.QUERY]),
     sales);
 
 export default router;

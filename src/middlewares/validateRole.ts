@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRoles } from '../utils/roles';
+import { UserRoles } from '../types/userRoles';
 
 type RoleFunction = (req: Request, res: Response, next: NextFunction) => void;
 function validateRole(roles: UserRoles[]): RoleFunction {

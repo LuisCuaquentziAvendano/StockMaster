@@ -1,7 +1,7 @@
 import { Operators } from '../utils/queryOperators';
-import { ParserTokens as Tokens } from '../utils/inventoryDataTypes';
+import { ParserTokens as Tokens } from '../types/inventoryDataTypes';
+import { InventorySchema } from '../types/inventorySchema';
 import regex from '../utils/regex';
-import InventorySchema from '../types/inventorySchema';
 
 const MONGO_OPERATORS: Record<string, (a: string, b: string, f: InventorySchema) => string> = Object.freeze({
     '+': (a: string, b: string, f: InventorySchema) => `{ $add: [${f1(a, f)}, ${f1(b, f)}] }`,

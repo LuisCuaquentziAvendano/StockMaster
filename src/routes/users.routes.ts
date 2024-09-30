@@ -6,12 +6,17 @@ const router = Router();
 router.post('/registerUser', UsersController.registerUser);
 router.put('/verifyUser/:token', UsersController.verifyUser);
 router.get('/getToken', UsersController.getToken);
-router.get('/setNewToken', UsersController.setNewToken);
-router.put('/deleteToken', UsersController.deleteToken);
+router.get('/generateNewToken',
+    middlewares.validateToken,
+    UsersController.setNewToken);
 router.get('/getInventories',
     middlewares.validateToken,
     UsersController.getInventories);
-router.put('/editPassword/:token', UsersController.editPassword);
-router.delete('/deleteUser', UsersController.deleteUser);
+router.put('/editPassword',
+    middlewares.validateToken,
+    UsersController.editPassword);
+router.delete('/deleteUser',
+    middlewares.validateToken,
+    UsersController.deleteUser);
 
 export default router;
