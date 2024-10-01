@@ -1,6 +1,7 @@
-import mongoose from 'mongoose';
+import { Schema, model } from 'mongoose';
+import { IUser } from '../types/user';
 
-const userSchema = new mongoose.Schema({
+const userSchema = new Schema<IUser>({
     email: {
         type: String,
         required: true,
@@ -15,7 +16,7 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     status: {
-        type: Boolean,
+        type: String,
         required: true
     },
     token: {
@@ -24,5 +25,5 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-const User = mongoose.model('User', userSchema);
+const User = model<IUser>('user', userSchema);
 export default User;

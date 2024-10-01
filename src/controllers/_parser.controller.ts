@@ -1,36 +1,35 @@
-import { Operators } from '../utils/queryOperators';
-import { ParserTokens as Tokens } from '../types/inventoryDataTypes';
-import { InventorySchema } from '../types/inventorySchema';
-import regex from '../utils/regex';
+import { Operators } from '../types/queryOperators';
+import { ParserTokens as Tokens, InventoryFields } from '../types/inventory';
+import { Regex, isType, insensitive } from '../types/regex';
 
-const MONGO_OPERATORS: Record<string, (a: string, b: string, f: InventorySchema) => string> = Object.freeze({
-    '+': (a: string, b: string, f: InventorySchema) => `{ $add: [${f1(a, f)}, ${f1(b, f)}] }`,
-    '-': (a: string, b: string, f: InventorySchema) => `{ $subtract: [${f1(a, f)}, ${f1(b, f)}] }`,
-    '*': (a: string, b: string, f: InventorySchema) => `{ $multiply: [${f1(a, f)}, ${f1(b, f)}] }`,
-    '/': (a: string, b: string, f: InventorySchema) => `{ $divide: [${f1(a, f)}, ${f1(b, f)}] }`,
-    '%': (a: string, b: string, f: InventorySchema) => `{ $mod: [${f1(a, f)}, ${f1(b, f)}] }`,
-    '==': (a: string, b: string, f: InventorySchema) => `{ $expr: { $eq: [${f1(a, f)}, ${f1(b, f)}] } }`,
-    '!=': (a: string, b: string, f: InventorySchema) => `{ $expr: { $ne: [${f1(a, f)}, ${f1(b, f)}] } }`,
-    '<': (a: string, b: string, f: InventorySchema) => `{ $expr: { $lt: [${f1(a, f)}, ${f1(b, f)}] } }`,
-    '>': (a: string, b: string, f: InventorySchema) => `{ $expr: { $gt: [${f1(a, f)}, ${f1(b, f)}] } }`,
-    '<=': (a: string, b: string, f: InventorySchema) => `{ $expr: { $lte: [${f1(a, f)}, ${f1(b, f)}] } }`,
-    '>=': (a: string, b: string, f: InventorySchema) => `{ $expr: { $gte: [${f1(a, f)}, ${f1(b, f)}] } }`,
-    'like': (a: string, b: string, f: InventorySchema) => `{ "fields.${a}": { $regex: ${b}, $options: "i" } }`,
-    'includes': (a: string, b: string, f: InventorySchema) => `{ "fields.${a}": { $in: [${b}] } }`,
-    'not': (a: string, b: string, f: InventorySchema) => `{ $not: ${f2(a, f)} }`,
-    'and': (a: string, b: string, f: InventorySchema) => `{ $and: [${f2(a, f)}, ${f2(b, f)}] }`,
-    'or': (a: string, b: string, f: InventorySchema) => `{ $or: [${f2(a, f)}, ${f2(b, f)}] }`
+const MONGO_OPERATORS: Record<string, (a: string, b: string, f: InventoryFields) => string> = Object.freeze({
+    '+': (a: string, b: string, f: InventoryFields) => `{ $add: [${f1(a, f)}, ${f1(b, f)}] }`,
+    '-': (a: string, b: string, f: InventoryFields) => `{ $subtract: [${f1(a, f)}, ${f1(b, f)}] }`,
+    '*': (a: string, b: string, f: InventoryFields) => `{ $multiply: [${f1(a, f)}, ${f1(b, f)}] }`,
+    '/': (a: string, b: string, f: InventoryFields) => `{ $divide: [${f1(a, f)}, ${f1(b, f)}] }`,
+    '%': (a: string, b: string, f: InventoryFields) => `{ $mod: [${f1(a, f)}, ${f1(b, f)}] }`,
+    '==': (a: string, b: string, f: InventoryFields) => `{ $expr: { $eq: [${f1(a, f)}, ${f1(b, f)}] } }`,
+    '!=': (a: string, b: string, f: InventoryFields) => `{ $expr: { $ne: [${f1(a, f)}, ${f1(b, f)}] } }`,
+    '<': (a: string, b: string, f: InventoryFields) => `{ $expr: { $lt: [${f1(a, f)}, ${f1(b, f)}] } }`,
+    '>': (a: string, b: string, f: InventoryFields) => `{ $expr: { $gt: [${f1(a, f)}, ${f1(b, f)}] } }`,
+    '<=': (a: string, b: string, f: InventoryFields) => `{ $expr: { $lte: [${f1(a, f)}, ${f1(b, f)}] } }`,
+    '>=': (a: string, b: string, f: InventoryFields) => `{ $expr: { $gte: [${f1(a, f)}, ${f1(b, f)}] } }`,
+    'like': (a: string, b: string, f: InventoryFields) => `{ "fields.${a}": { $Regex: ${b}, $options: "i" } }`,
+    'includes': (a: string, b: string, f: InventoryFields) => `{ "fields.${a}": { $in: [${b}] } }`,
+    'not': (a: string, b: string, f: InventoryFields) => `{ $not: ${f2(a, f)} }`,
+    'and': (a: string, b: string, f: InventoryFields) => `{ $and: [${f2(a, f)}, ${f2(b, f)}] }`,
+    'or': (a: string, b: string, f: InventoryFields) => `{ $or: [${f2(a, f)}, ${f2(b, f)}] }`
 });
 
-function f1(argument: string, fields: InventorySchema): string {
+function f1(argument: string, fields: InventoryFields): string {
     if (argument in fields)
         return '"$fields.' + argument + '"';
     return argument;
 }
 
-function f2(argument: string, fields: InventorySchema): string {
+function f2(argument: string, fields: InventoryFields): string {
     if (argument in fields)
-        return MONGO_OPERATORS['=='](argument, Operators.TRUE, fields);
+        return MONGO_OPERATORS['=='](argument, Tokens.TRUE, fields);
     return argument;
 }
 
@@ -73,15 +72,18 @@ class Rules {
     ];
 }
 
-class Parser {
-    static evalQuery(expression: string, fields: InventorySchema): [boolean, string] {
+export class Parser {
+    static evalQuery(expression: string, fields: InventoryFields): [boolean, string] {
+        const QUERY = new RegExp(`${Regex.STRING}|${Regex.INVENTORY_FIELD}|${Regex.FLOAT}|${Object.keys(Operators.ALL).map(k => k).join('|')}|${Tokens.TRUE}|${Tokens.FALSE}|${Tokens.NULL}|\\${Operators.OPEN_PAREN}|\\${Operators.CLOSE_PAREN}|.`
+            .replace(/\|[\+\*\/]\|/g, x => `|\\${x[1]}|`), 'gi');
         let values: string[] = [];
         let opers: string[] = [];
         let queryValues: string[] = [];
         let validQuery = true;
-        for (let i = 0; i < expression.length && validQuery; i++) {
-            let token: string = expression[i];
-            if (regex.isType(regex.SPACE, token))
+        const tokens = expression.match(QUERY);
+        for (let i = 0; i < tokens.length && validQuery; i++) {
+            let token: string = tokens[i];
+            if (isType(Regex.SPACE, token))
                 continue;
             if (token === Operators.OPEN_PAREN) {
                 opers.push(token);
@@ -98,25 +100,26 @@ class Parser {
                     validQuery = false;
                 continue;
             }
-            if (regex.isType(regex.FLOAT, token)) {
+            if (isType(Regex.FLOAT, token)) {
                 values.push(Tokens.NUM);
                 queryValues.push(token);
                 continue;
             }
-            if (regex.isType(regex.STR, token)) {
+            if (isType(Regex.STRING, token)) {
                 values.push(Tokens.STR);
-                queryValues.push(regex.formatMongoString(token));
+                const stringSanitized = token.slice(1, -1);
+                queryValues.push('"' + stringSanitized + '"');
                 continue;
             }
-            token = regex.formatInsensitiveCase(token);
-            if (token === Operators.TRUE || token === Operators.FALSE) {
+            token = insensitive(token);
+            if (token === Tokens.TRUE || token === Tokens.FALSE) {
                 values.push(Tokens.BOOL);
                 queryValues.push(token);
                 continue;
             }
-            if (token === Operators.NULL) {
+            if (token === Tokens.NULL) {
                 values.push(Tokens.NULL);
-                queryValues.push(expression[i]);
+                queryValues.push(tokens[i]);
                 continue;
             }
             if (token in fields) {
@@ -125,7 +128,7 @@ class Parser {
                 continue;
             }
             if (token in Operators.ALL) {
-                if (opers.length == 0 || opers[opers.length-1] === Operators.OPEN_PAREN || Operators.ALL[expression[i]] > Operators.ALL[opers[opers.length-1]])
+                if (opers.length == 0 || opers[opers.length-1] === Operators.OPEN_PAREN || Operators.ALL[tokens[i]] > Operators.ALL[opers[opers.length-1]])
                     opers.push(token);
                 else {
                     validQuery = Parser.solve(values, opers, queryValues, fields);
@@ -140,7 +143,7 @@ class Parser {
         if (validQuery)
             validQuery = Parser.solve(values, opers, queryValues, fields);
         if (validQuery && queryValues[0] in fields) {
-            queryValues.push(Operators.TRUE);
+            queryValues.push(Tokens.TRUE);
             Parser.buildQuery(queryValues, '==', fields);
         }
         let query = '';
@@ -152,7 +155,7 @@ class Parser {
         return [validQuery, query];
     }
 
-    private static solve(values: string[], opers: string[], queryValues: string[], fields: InventorySchema): boolean {
+    private static solve(values: string[], opers: string[], queryValues: string[], fields: InventoryFields): boolean {
         if (values.length === 1 && opers.length === 0 && values[0] == Tokens.BOOL)
             return true;
         if (values.length === 0 || opers.length === 0)
@@ -186,7 +189,7 @@ class Parser {
         return false;
     }
 
-    private static checkTypes(pair: Rule, array: Rule[], fields: InventorySchema): boolean {
+    private static checkTypes(pair: Rule, array: Rule[], fields: InventoryFields): boolean {
         if (pair[0] in fields)
             pair[0] = fields[pair[0]];
         if (pair[1] in fields)
@@ -194,7 +197,7 @@ class Parser {
         return array.includes(pair);
     }
 
-    private static buildQuery(queryValues: string[], oper: string, fields: InventorySchema): void {
+    private static buildQuery(queryValues: string[], oper: string, fields: InventoryFields): void {
         let b = queryValues.pop();
         let a = b;
         if (!(oper in Operators.BOOL_UN))
@@ -204,5 +207,3 @@ class Parser {
         queryValues.push(result);
     }
 }
-
-export default Parser;

@@ -1,7 +1,4 @@
 export class Operators {
-    static readonly TRUE = 'true';
-    static readonly FALSE = 'false';
-    static readonly NULL = 'null';
     static readonly OPEN_PAREN = '(';
     static readonly CLOSE_PAREN = ')';
     static readonly NUM_OPER = Object.freeze({

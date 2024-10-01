@@ -3,12 +3,12 @@ import UsersController from '../controllers/users.controller';
 import middlewares from '../middlewares';
 
 const router = Router();
-router.post('/registerUser', UsersController.registerUser);
-router.put('/verifyUser/:token', UsersController.verifyUser);
-router.get('/getToken', UsersController.getToken);
+router.post('/register', UsersController.register);
+router.put('/verifyEmail/:token', UsersController.verifyEmail);
+router.get('/login', UsersController.login);
 router.get('/generateNewToken',
     middlewares.validateToken,
-    UsersController.setNewToken);
+    UsersController.generateNewToken);
 router.get('/getInventories',
     middlewares.validateToken,
     UsersController.getInventories);

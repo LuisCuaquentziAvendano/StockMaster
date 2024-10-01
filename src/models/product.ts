@@ -1,17 +1,18 @@
-import mongoose, { Schema } from 'mongoose';
+import { Schema, model } from 'mongoose';
+import { IProduct } from '../types/product';
 
-const productSchema = new mongoose.Schema({
+const productSchema = new Schema<IProduct>({
     inventory: {
         type: Schema.Types.ObjectId,
-        ref: 'Inventory',
+        ref: 'inventory',
         required: true
     },
     fields: {
         type: Map,
-        of: Schema.Types.Mixed,
+        of: String,
         required: true
     }
 });
 
-const Product = mongoose.model('Product', productSchema);
+const Product = model<IProduct>('product', productSchema);
 export default Product;

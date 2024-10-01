@@ -7,7 +7,7 @@ router.post('/createSchema', InventoriesController.createtSchema);
 router.delete('/deleteSchema', InventoriesController.deleteSchema);
 
 router.post('/createField', InventoriesController.createField);
-router.put('/editField', InventoriesController.editField);
+router.put('/editFieldName', InventoriesController.editFieldName);
 router.delete('/deleteField', InventoriesController.deleteField);
 
 router.put('/modifyPermissions', InventoriesController.modifyPermissions);

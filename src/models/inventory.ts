@@ -1,6 +1,7 @@
-import mongoose, { Schema } from 'mongoose';
+import { Schema, model } from 'mongoose';
+import { IInventory } from '../types/inventory';
 
-const inventorySchema = new mongoose.Schema({
+const inventorySchema = new Schema<IInventory>({
     name: {
         type: String,
         required: true
@@ -15,7 +16,7 @@ const inventorySchema = new mongoose.Schema({
             {
                 user: {
                     type: Schema.Types.ObjectId,
-                    ref: 'User',
+                    ref: 'user',
                     required: true
                 },
                 role: {
@@ -25,8 +26,12 @@ const inventorySchema = new mongoose.Schema({
             }
         ],
         required: true
+    },
+    status: {
+        type: String,
+        required: true
     }
 });
 
-const Inventory = mongoose.model('Inventory', inventorySchema);
+const Inventory = model<IInventory>('inventory', inventorySchema);
 export default Inventory;
