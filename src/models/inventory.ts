@@ -7,9 +7,8 @@ const inventorySchema = new Schema<IInventory>({
         required: true
     },
     fields: {
-        type: Map,
-        of: String,
-        required: true
+        type: Object,
+        default: {}
     },
     roles: {
         type: [
@@ -22,7 +21,8 @@ const inventorySchema = new Schema<IInventory>({
                 role: {
                     type: String,
                     required: true
-                }
+                },
+                _id: false
             }
         ],
         required: true

@@ -4,19 +4,36 @@ import jwt from 'jsonwebtoken';
 import { isEmail } from 'validator';
 import User from '../models/user';
 import { IUser } from '../types/user';
-import { UserStatus } from '../types/status';
+import { GeneralUseStatus, UserStatus } from '../types/status';
 import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
 import { NativeTypes, isNativeType } from '../types/nativeTypes';
 import { isType, Regex } from '../types/regex';
 import { LoginJwtPayload } from '../types/loginJwtPayload';
+import Inventory from '../models/inventory';
+import { IInventory } from '../types/inventory';
+import { Schema } from 'mongoose';
 
 class UsersController {
     static register(req: Request, res: Response) {
-        const [validData, user] = UsersController.validateData(req);
-        if (!validData) {
+        const name = req.body.name;
+        const email = req.body.email;
+        const password = req.body.password;
+        if (!isNativeType(NativeTypes.STRING, name)
+            || !isType(Regex.USER_NAME, name)
+            || !isNativeType(NativeTypes.STRING, email)
+            || !isEmail(email)
+            || !isNativeType(NativeTypes.STRING, password)
+            || !isType(Regex.USER_PASSWORD, password)
+        ) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid user data' });
             return;
         }
+        const user: IUser = {
+            name,
+            email,
+            password,
+            status: UserStatus.ACTIVE  // debe ser estatus nuevo
+        };
         Promise.all([
             User.countDocuments({ email: user.email }),
             bcrypt.hash(user.password, 10)
@@ -27,20 +44,36 @@ class UsersController {
                 throw new Error('');
             }
             user.password = passwordHash;
-            user.status = UserStatus.ACTIVE;
-            user.token = UsersController.createToken(user.email);
             return User.create(user);
         }).then((userCreated: IUser) => {
-            res.status(HTTP_STATUS_CODES.CREATED).send({ token: userCreated.token });
+            const token = UsersController.createToken(userCreated._id);
+            return User.findOneAndUpdate({
+                _id: userCreated._id
+            }, {
+                token
+            }, {
+                new: true
+            });
+        }).then((userUpdated: IUser) => {
+            res.status(HTTP_STATUS_CODES.CREATED).send({ authorization: userUpdated.token });  // no enviar token, solo correo de confirmación
         }).catch((error: Error) => {
-            if (error.message != '')
+            if (error.message != '') {
                 res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+            }
         });
     }
 
     static login(req: Request, res: Response) {
-        const email = req.body.email as string;
-        const password = req.body.password as string;
+        const email = req.body.email;
+        const password = req.body.password;
+        if (!isNativeType(NativeTypes.STRING, email)
+            || !isEmail(email)
+            || !isNativeType(NativeTypes.STRING, password)
+            || !isType(Regex.USER_PASSWORD, password)
+        ) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid user data' });
+            return;
+        }
         User.findOne({
             email,
             status: UserStatus.ACTIVE
@@ -53,13 +86,14 @@ class UsersController {
         }).then(result => {
             const [user, validLogin] = result;
             if (validLogin) {
-                res.send({ token: user.token });
+                res.send({ authorization: user.token });
             } else {
                 res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
             }
         }).catch((error: Error) => {
-            if (error.message != '')
+            if (error.message != '') {
                 res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+            }
         });
     }
 
@@ -67,15 +101,70 @@ class UsersController {
         // 
     }
 
+    static getData(req: Request, res: Response) {
+        const user = req.user;
+        const data: IUser = {
+            email: user.email,
+            name: user.name
+        };
+        res.send(data);
+    }
+
     static generateNewToken(req: Request, res: Response) {
-        // 
+        const user = req.user;
+        const newToken = UsersController.createToken(user._id);
+        User.updateOne({
+            _id: user._id
+        }, {
+            token: newToken
+        }).then(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
+        }).catch(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+        });
     }
 
     static getInventories(req: Request, res: Response) {
-        // 
+        const user = req.user;
+        Inventory.find({
+            roles: {
+                $elemMatch: { user: user._id }
+            },
+            status: GeneralUseStatus.ACTIVE
+        }, {
+            name: 1,
+            roles: 1
+        }).then((inventories: IInventory[]) => {
+            const data: Record<any, any>[] = [];
+            inventories.forEach(inventory => {
+                const assignedRole = inventory.roles.find(role => role.user.toString() == user._id.toString());
+                data.push({
+                    id: inventory._id,
+                    name: inventory.name,
+                    role: assignedRole.role
+                });
+            });
+            res.send({ inventories: data });
+        }).catch((err) => {
+            console.log(err.message);
+            res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+        });
     }
 
     static deleteUser(req: Request, res: Response) {
+        const user = req.user;
+        User.updateOne({
+            _id: user._id
+        }, {
+            status: UserStatus.DELETED
+        }).then(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
+        }).catch(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+        });
+    }
+
+    static editData(req: Request, res: Response) {
         // 
     }
 
@@ -83,32 +172,11 @@ class UsersController {
         // 
     }
 
-    private static createToken(email: string): string {
+    private static createToken(_id: Schema.Types.ObjectId): string {
         const secretKey = process.env.JWT_KEY;
-        const payload: LoginJwtPayload = { email, timestamp: Date.now() };
+        const payload: LoginJwtPayload = { _id, timestamp: Date.now() };
         const token = jwt.sign(payload, secretKey);
         return token;
-    }
-
-    private static validateData(req: Request): [boolean, IUser] {
-        const name: string = req.body.name;
-        const email: string = req.body.email;
-        const password: string = req.body.password;
-        const user: IUser = {
-            name,
-            email,
-            password,
-            status: UserStatus.ACTIVE  // cuando se implemente la verificación, cambiar a estatus nuevo
-        };
-        if (!isNativeType(NativeTypes.STRING, req.body.name)
-            || !isNativeType(NativeTypes.STRING, req.body.email)
-            || !isNativeType(NativeTypes.STRING, req.body.password)
-            || !isEmail(email)
-            || !isType(Regex.USER_NAME, name)
-            || !isType(Regex.USER_PASSWORD, password)) {
-            return [false, user];
-        }
-        return [true, user];
     }
 }
 

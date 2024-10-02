@@ -1,16 +1,36 @@
 import { Router } from 'express';
 import InventoriesController from '../controllers/inventories.controller';
+import middlewares from '../middlewares';
+import { UserRoles } from '../types/user';
 
 const router = Router();
-router.get('/getSchema', InventoriesController.getSchema);
-router.post('/createSchema', InventoriesController.createtSchema);
-router.delete('/deleteSchema', InventoriesController.deleteSchema);
+router.get('/getInventory',
+    middlewares.getInventory,
+    middlewares.validateRole([UserRoles.ADMIN, UserRoles.STOCK, UserRoles.QUERY]),
+    InventoriesController.getInventory);
+router.post('/createInventory',
+    InventoriesController.createInventory);
+router.delete('/deleteInventory',
+    middlewares.getInventory,
+    middlewares.validateRole([UserRoles.ADMIN]),
+    InventoriesController.deleteInventory);
 
-router.post('/createField', InventoriesController.createField);
-router.put('/editFieldName', InventoriesController.editFieldName);
-router.delete('/deleteField', InventoriesController.deleteField);
+router.put('/createField',
+    middlewares.getInventory,
+    middlewares.validateRole([UserRoles.ADMIN]),
+    InventoriesController.createField);
+router.put('/deleteField',
+    middlewares.getInventory,
+    middlewares.validateRole([UserRoles.ADMIN]),
+    InventoriesController.deleteField);
 
-router.put('/modifyPermissions', InventoriesController.modifyPermissions);
-router.put('/confirmInvitation/:token', InventoriesController.confirmInvitation);
+router.get('/getPermissions',
+    middlewares.getInventory,
+    middlewares.validateRole([UserRoles.ADMIN]),
+    InventoriesController.getPermissions);
+router.put('/modifyPermissions',
+    middlewares.getInventory,
+    middlewares.validateRole([UserRoles.ADMIN]),
+    InventoriesController.modifyPermissions);
 
 export default router;

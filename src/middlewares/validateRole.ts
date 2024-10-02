@@ -7,12 +7,10 @@ function validateRole(roles: UserRoles[]): RoleFunction {
     return function (req: Request, res: Response, next: NextFunction): void {
         const user = req.user;
         const inventory = req.inventory;
-        const assignedRole = inventory.roles.find(ar => user._id == ar.user);
-        if (!assignedRole) {
-            res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
-            return;
-        }
-        if (!roles.includes(assignedRole.role)) {
+        const assignedRole = inventory.roles.find(role => role.user.toString() == user._id.toString());
+        if (!assignedRole
+            || !roles.includes(assignedRole.role)
+        ) {
             res.sendStatus(HTTP_STATUS_CODES.FORBIDDEN);
             return;
         }

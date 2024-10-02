@@ -16,8 +16,6 @@ router.get('/', (req: Request, res: Response) => {
 router.use('/users', users);
 router.use('/inventories',
     middlewares.validateToken,
-    middlewares.getInventory,
-    middlewares.validateRole([UserRoles.ADMIN]),
     inventories);
 router.use('/products',
     middlewares.validateToken,

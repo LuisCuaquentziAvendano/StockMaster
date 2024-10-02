@@ -1,4 +1,6 @@
+import { Schema } from "mongoose";
+
 export interface LoginJwtPayload {
-    email: string,
+    _id: Schema.Types.ObjectId,
     timestamp: number
 }

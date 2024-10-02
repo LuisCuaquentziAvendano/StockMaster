@@ -2,6 +2,7 @@ import express from 'express';
 import { config } from 'dotenv';
 import { connect } from 'mongoose';
 import routes from './routes';
+import * as _ from './types/request'
 config();
 
 const app = express();

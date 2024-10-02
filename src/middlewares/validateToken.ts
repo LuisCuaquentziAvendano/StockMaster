@@ -13,9 +13,11 @@ function validateToken(req: Request, res: Response, next: NextFunction): void {
     try {
         payload = jwt.verify(token, secretKey) as LoginJwtPayload;
         User.findOne({
-            email: payload.email,
+            _id: payload._id,
             status: UserStatus.ACTIVE,
             token
+        }, {
+            password: 0
         }).then((user: IUser) => {
             if (!user) {
                 res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
@@ -24,8 +26,9 @@ function validateToken(req: Request, res: Response, next: NextFunction): void {
             req.user = user;
             next();
         }).catch((error: Error) => {
-            if (error.message != '')
+            if (error.message != '') {
                 res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+            }
         });
     } catch {
         res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);

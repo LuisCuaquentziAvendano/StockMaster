@@ -4,16 +4,17 @@ import { Schema } from 'mongoose';
 export interface IUser {
     _id?: Schema.Types.ObjectId;
     email: string;
-    password: string;
+    password?: string;
     name: string;
-    status: UserStatus;
+    status?: UserStatus;
     token?: string;
 }
 
 export enum UserRoles {
     ADMIN = 'admin',
     STOCK = 'stock',
-    QUERY = 'query'
+    QUERY = 'query',
+    NONE = 'none'
 }
 
 export interface AssignedRole {

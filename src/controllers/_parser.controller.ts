@@ -191,9 +191,9 @@ export class Parser {
 
     private static checkTypes(pair: Rule, array: Rule[], fields: InventoryFields): boolean {
         if (pair[0] in fields)
-            pair[0] = fields[pair[0]];
+            pair[0] = fields[pair[0]].type;
         if (pair[1] in fields)
-            pair[1] = fields[pair[1]];
+            pair[1] = fields[pair[1]].type;
         return array.includes(pair);
     }
 

@@ -8,8 +8,11 @@ const productSchema = new Schema<IProduct>({
         required: true
     },
     fields: {
-        type: Map,
-        of: String,
+        type: Object,
+        default: {}
+    },
+    status: {
+        type: String,
         required: true
     }
 });
