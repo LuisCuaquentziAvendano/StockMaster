@@ -23,36 +23,52 @@ export enum InventoryDataTypes {
     STRING = 'string',
     BOOLEAN = 'boolean',
     ARRAY = 'array',
-    IMAGE = 'image',
-    DATETIME = 'datetime'
+    DATETIME = 'datetime',
+    IMAGE = 'image'
 }
 
 export const InventoryDataTypes2: string[] = [
-    InventoryDataTypes.ARRAY,,
-    InventoryDataTypes.BOOLEAN,,
-    InventoryDataTypes.DATETIME,,
-    InventoryDataTypes.FLOAT,,
-    InventoryDataTypes.IMAGE,,
-    InventoryDataTypes.INTEGER,,
+    InventoryDataTypes.ARRAY,
+    InventoryDataTypes.BOOLEAN,
+    InventoryDataTypes.DATETIME,
+    InventoryDataTypes.FLOAT,
+    InventoryDataTypes.IMAGE,
+    InventoryDataTypes.INTEGER,
     InventoryDataTypes.STRING
 ];
 
-export enum ParserTokens {
+export enum Tokens {
     NUM = InventoryDataTypes.FLOAT,
     STR = InventoryDataTypes.STRING,
     BOOL = InventoryDataTypes.BOOLEAN,
     ARR = InventoryDataTypes.ARRAY,
+    DT = InventoryDataTypes.DATETIME,
     NULL = 'null',
     TRUE = 'true',
     FALSE = 'false'
 }
 
-export const ParserTokens2: string[] = [
-    ParserTokens.NUM,
-    ParserTokens.STR,
-    ParserTokens.BOOL,
-    ParserTokens.ARR,
-    ParserTokens.NULL,
-    ParserTokens.TRUE,
-    ParserTokens.FALSE
-]
+export const Tokens2: string[] = [
+    Tokens.NUM,
+    Tokens.STR,
+    Tokens.BOOL,
+    Tokens.ARR,
+    Tokens.DT,
+    Tokens.NULL,
+    Tokens.TRUE,
+    Tokens.FALSE
+];
+
+export function inventoryTypeToToken(type: InventoryDataTypes): Tokens {
+    if (type == InventoryDataTypes.ARRAY)
+        return Tokens.ARR;
+    if (type == InventoryDataTypes.BOOLEAN)
+        return Tokens.BOOL;
+    if (type == InventoryDataTypes.DATETIME)
+        return Tokens.DT;
+    if (type == InventoryDataTypes.FLOAT)
+        return Tokens.NUM;
+    if (type == InventoryDataTypes.INTEGER)
+        return Tokens.NUM;
+    return Tokens.STR;
+}

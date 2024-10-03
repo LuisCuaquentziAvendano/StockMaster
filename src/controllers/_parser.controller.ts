@@ -1,37 +1,40 @@
-import { Operators } from '../types/queryOperators';
-import { ParserTokens as Tokens, InventoryFields } from '../types/inventory';
-import { Regex, isType, insensitive } from '../types/regex';
+import { Operators, Operators2 } from '../types/queryOperators';
+import { Tokens, InventoryFields, inventoryTypeToToken } from '../types/inventory';
+import { Regex, isType, insensitive, scapeMongoChars, scapeRegexChars } from '../types/regex';
 import { isNativeType, NativeTypes } from '../types/nativeTypes';
 
-const MONGO_OPERATORS: Record<string, (a: string | Object, b: string | Object, f: InventoryFields) => Object> = Object.freeze({
-    '+': (a: string, b: string, f: InventoryFields) => ({ $add: [f1(a, f), f1(b, f)] }),
-    '-': (a: string, b: string, f: InventoryFields) => ({ $subtract: [f1(a, f), f1(b, f)] }),
-    '*': (a: string, b: string, f: InventoryFields) => ({ $multiply: [f1(a, f), f1(b, f)] }),
-    '/': (a: string, b: string, f: InventoryFields) => ({ $divide: [f1(a, f), f1(b, f)] }),
-    '%': (a: string, b: string, f: InventoryFields) => ({ $mod: [f1(a, f), f1(b, f)] }),
-    '==': (a: string, b: string, f: InventoryFields) => ({ $expr: { $eq: [f1(a, f), f1(b, f)] } }),
-    '!=': (a: string, b: string, f: InventoryFields) => ({ $expr: { $ne: [f1(a, f), f1(b, f)] } }),
-    '<': (a: string, b: string, f: InventoryFields) => ({ $expr: { $lt: [f1(a, f), f1(b, f)] } }),
-    '>': (a: string, b: string, f: InventoryFields) => ({ $expr: { $gt: [f1(a, f), f1(b, f)] } }),
-    '<=': (a: string, b: string, f: InventoryFields) => ({ $expr: { $lte: [f1(a, f), f1(b, f)] } }),
-    '>=': (a: string, b: string, f: InventoryFields) => ({ $expr: { $gte: [f1(a, f), f1(b, f)] } }),
-    'like': (a: string, b: string, f: InventoryFields) => ({ "fields.a}": { $Regex: b}, $options: "i" }),
-    'includes': (a: string, b: string, f: InventoryFields) => ({ "fields.a}": { $in: [b] } }),
-    'not': (a: string, b: string, f: InventoryFields) => ({ $not: f2(a, f) }),
-    'and': (a: string, b: string, f: InventoryFields) => ({ $and: [f2(a, f), f2(b, f)] }),
-    'or': (a: string, b: string, f: InventoryFields) => ({ $or: [f2(a, f), f2(b, f)] })
+const MONGO_OPERS: Record<string, (a: Object,
+                                    aIsField: boolean,
+                                    b: Object,
+                                    bIsField: boolean | undefined) => Object> = Object.freeze({
+    [Operators.SUM]: (a: any, aF: any, b: any, bF: any) => ({ $add: [f1(a, aF), f1(b, bF)] }),
+    [Operators.SUBTRACTION]: (a: any, aF: any, b: any, bF: any) => ({ $subtract: [f1(a, aF), f1(b, bF)] }),
+    [Operators.MULTIPLICATION]: (a: any, aF: any, b: any, bF: any) => ({ $multiply: [f1(a, aF), f1(b, bF)] }),
+    [Operators.DIVISION]: (a: any, aF: any, b: any, bF: any) => ({ $divide: [f1(a, aF), f1(b, bF)] }),
+    [Operators.MODULUS]: (a: any, aF: any, b: any, bF: any) => ({ $mod: [f1(a, aF), f1(b, bF)] }),
+    [Operators.EQUALS]: (a: any, aF: any, b: any, bF: any) => ({ $expr: { $eq: [f1(a, aF), f1(b, bF)] } }),
+    [Operators.NOT_EQUALS]: (a: any, aF: any, b: any, bF: any) => ({ $expr: { $ne: [f1(a, aF), f1(b, bF)] } }),
+    [Operators.LESS_THAN]: (a: any, aF: any, b: any, bF: any) => ({ $expr: { $lt: [f1(a, aF), f1(b, bF)] } }),
+    [Operators.GREATER_THAN]: (a: any, aF: any, b: any, bF: any) => ({ $expr: { $gt: [f1(a, aF), f1(b, bF)] } }),
+    [Operators.LESS_THAN_EQUAL]: (a: any, aF: any, b: any, bF: any) => ({ $expr: { $lte: [f1(a, aF), f1(b, bF)] } }),
+    [Operators.GREATER_THAN_EQUAL]: (a: any, aF: any, b: any, bF: any) => ({ $expr: { $gte: [f1(a, aF), f1(b, bF)] } }),
+    [Operators.LIKE]: (a: any, aF: any, b: any, bF: any) => ({ [formatField(a)]: { $regex: scapeRegexChars(b), $options: 'i' } }),
+    [Operators.INCLUDES]: (a: any, aF: any, b: any, bF: any) => ({ [formatField(a)]: { $in: [b] } }),
+    [Operators.NOT]: (a: any, aF: any, b: any, bF: any) => ({ $not: a }),
+    [Operators.AND]: (a: any, aF: any, b: any, bF: any) => ({ $and: [a, b] }),
+    [Operators.OR]: (a: any, aF: any, b: any, bF: any) => ({ $or: [a, b] }),
+    [Operators.AND_SPECIAL]: (a: any, aF: any, b: any, bF: any) => ({ $and: [a, b] })
 });
 
-function f1(argument: string, fields: InventoryFields): string {
-    if (argument in fields)
-        return '"$fields.' + argument + '"';
-    return argument;
+function f1(argument: Object, argumentIsField: boolean): string {
+    if (argumentIsField) {
+        return formatField(argument as string);
+    }
+    return scapeMongoChars(argument as string);
 }
 
-function f2(argument: string, fields: InventoryFields): Object {
-    if (argument in fields)
-        return MONGO_OPERATORS['=='](argument, Tokens.TRUE, fields);
-    return argument;
+function formatField(field: string): string {
+    return '$fields.' + field;
 }
 
 type Rule = [string, string | undefined];
@@ -48,157 +51,235 @@ class Rules {
         [Tokens.NUM, Tokens.NUM]
     ];
 
-    static readonly NUM_EQ: Rule[] = [
-        ...Rules.NUM_OPER
-    ];
-
     static readonly STR: Rule[] = [
         [Tokens.STR, Tokens.STR]
+    ];
+
+    static readonly ARR: Rule[] = [
+        [Tokens.ARR, Tokens.BOOL],
+        [Tokens.ARR, Tokens.NUM],
+        [Tokens.ARR, Tokens.STR],
+        [Tokens.ARR, Tokens.DT]
+    ];
+
+    static readonly NUM_EQ: Rule[] = [
+        ...Rules.NUM_OPER,
+        [Tokens.DT, Tokens.DT],
+        [Tokens.STR, Tokens.DT],
+        [Tokens.DT, Tokens.STR]
     ];
     
     static readonly EQUAL: Rule[] = [
         ...Rules.BOOL_BIN,
-        ...Rules.NUM_OPER,
+        ...Rules.NUM_EQ,
         ...Rules.STR,
         [Tokens.BOOL, Tokens.NULL],
         [Tokens.NUM, Tokens.NULL],
         [Tokens.STR, Tokens.NULL],
+        [Tokens.DT, Tokens.NULL],
+        [Tokens.ARR, Tokens.NULL],
         [Tokens.NULL, Tokens.NULL]
-    ];
-    
-    static readonly ARR: Rule[] = [
-        [Tokens.ARR, Tokens.BOOL],
-        [Tokens.ARR, Tokens.NUM],
-        [Tokens.ARR, Tokens.STR]
     ];
 }
 
 export class Parser {
     static evalQuery(expression: string, fields: InventoryFields): [boolean, Object] {
-        const QUERY = new RegExp(`${Regex.STRING}|${Regex.INVENTORY_FIELD}|${Regex.FLOAT}|${Object.keys(Operators.ALL).map(k => k).join('|')}|${Tokens.TRUE}|${Tokens.FALSE}|${Tokens.NULL}|\\${Operators.OPEN_PAREN}|\\${Operators.CLOSE_PAREN}|.`
-            .replace(/\|[\+\*\/]\|/g, x => `|\\${x[1]}|`), 'gi');
-        let values: string[] = [];
+        if (isType(Regex.SPACE, expression)) {
+            return [true, {}];
+        }
+        const QUERY = new RegExp(`${Regex.STRING}|${Regex.INVENTORY_FIELD}|${Regex.FLOAT}|${Object.keys(Operators2.ALL).map(k => scapeRegexChars(k)).join('|')}|${Tokens.TRUE}|${Tokens.FALSE}|${Tokens.NULL}|${scapeRegexChars(Operators.OPEN_PAREN)}|${scapeRegexChars(Operators.CLOSE_PAREN)}|.`);
+        let tokens: Tokens[] = [];
         let opers: string[] = [];
-        let queryValues: Array<string | Object> = [];
+        let query: Array<Object> = [];
         let validQuery = true;
-        const tokens = expression.match(QUERY);
-        for (let i = 0; i < tokens.length && validQuery; i++) {
-            let token: string = tokens[i];
-            if (isType(Regex.SPACE, token))
+        const matches = expression.match(QUERY);
+        for (let i = 0; i < matches.length && validQuery; i++) {
+            if (isType(Regex.SPACE, matches[i]))
                 continue;
-            if (token === Operators.OPEN_PAREN) {
-                opers.push(token);
+            if (matches[i] === Operators.OPEN_PAREN) {
+                opers.push(matches[i]);
                 continue;
             }
-            if (token === Operators.CLOSE_PAREN) {
+            if (matches[i] === Operators.CLOSE_PAREN) {
                 if (opers.length > 0 && opers[opers.length-1] === Operators.OPEN_PAREN)
                     opers.pop();
                 else if (opers.length > 0) {
-                    validQuery = Parser.solve(values, opers, queryValues, fields);
+                    validQuery = Parser.solve(tokens, opers, query, fields);
                     i--;
                 }
                 else
                     validQuery = false;
                 continue;
             }
-            if (isType(Regex.FLOAT, token)) {
-                values.push(Tokens.NUM);
-                queryValues.push(token);
+            if (isType(Regex.FLOAT, matches[i])) {
+                tokens.push(Tokens.NUM);
+                query.push(parseFloat(matches[i]));
                 continue;
             }
-            if (isType(Regex.STRING, token)) {
-                values.push(Tokens.STR);
-                const stringSanitized = token.slice(1, -1);
-                queryValues.push('"' + stringSanitized + '"');
+            if (isType(Regex.STRING, matches[i])) {
+                tokens.push(Tokens.STR);
+                query.push(matches[i]);
                 continue;
             }
-            token = insensitive(token);
-            if (token === Tokens.TRUE || token === Tokens.FALSE) {
-                values.push(Tokens.BOOL);
-                queryValues.push(token);
+            matches[i] = insensitive(matches[i]);
+            if (matches[i] === Tokens.TRUE || matches[i] === Tokens.FALSE) {
+                tokens.push(Tokens.BOOL);
+                query.push(matches[i] == Tokens.TRUE);
                 continue;
             }
-            if (token === Tokens.NULL) {
-                values.push(Tokens.NULL);
-                queryValues.push(tokens[i]);
+            if (matches[i] === Tokens.NULL) {
+                tokens.push(Tokens.NULL);
+                query.push(null);
                 continue;
             }
-            if (token in fields) {
-                values.push(token);
-                queryValues.push(token);
+            if (matches[i] in fields) {
+                tokens.push(inventoryTypeToToken(fields[matches[i]].type));
+                query.push(matches[i]);
                 continue;
             }
-            if (token in Operators.ALL) {
-                if (opers.length == 0 || opers[opers.length-1] === Operators.OPEN_PAREN || Operators.ALL[tokens[i]] > Operators.ALL[opers[opers.length-1]])
-                    opers.push(token);
+            if (matches[i] in Operators2.ALL) {
+                if (opers.length == 0 || opers[opers.length-1] === Operators.OPEN_PAREN || Operators2.ALL[tokens[i]] > Operators2.ALL[opers[opers.length-1]])
+                    opers.push(matches[i]);
                 else {
-                    validQuery = Parser.solve(values, opers, queryValues, fields);
+                    validQuery = Parser.solve(tokens, opers, query, fields);
                     i--;
                 }
                 continue;
             }
             validQuery = false;
         }
-        while (validQuery && values.length > 1 && opers.length > 0)
-            validQuery = Parser.solve(values, opers, queryValues, fields);
-        if (validQuery)
-            validQuery = Parser.solve(values, opers, queryValues, fields);
-        if (validQuery && isNativeType(NativeTypes.STRING, queryValues[0])) {
-            queryValues.push(Tokens.TRUE);
-            Parser.buildQuery(queryValues, '==', fields);
+        while (validQuery && tokens.length > 1 && opers.length > 0) {
+            validQuery = Parser.solve(tokens, opers, query, fields);
         }
-        return [validQuery, queryValues[0]];
+        if (validQuery) {
+            validQuery = Parser.solve(tokens, opers, query, fields);
+        }
+        return [validQuery, query[0]];
     }
 
-    private static solve(values: string[], opers: string[], queryValues: Array<string | Object>, fields: InventoryFields): boolean {
-        if (values.length === 1 && opers.length === 0 && values[0] == Tokens.BOOL)
+    private static solve(tokens: Tokens[], opers: string[], query: Array<string | Object>, fields: InventoryFields): boolean {
+        if (tokens.length === 1 && opers.length === 0 && tokens[0] == Tokens.BOOL) {
+            const value = query[0];
+            if (isNativeType(NativeTypes.STRING, value)) {
+                query[0] = Parser.booleanEqualsTrue(query[0], (value as string) in fields);
+            }
             return true;
-        if (values.length === 0 || opers.length === 0)
+        }
+
+        if (tokens.length === 0 || opers.length === 0) {
             return false;
-        const b = values.pop();
+        }
+
+        let bValue = query.pop();
+        const bIsField = isNativeType(NativeTypes.STRING, bValue) && (bValue as string) in fields;
+        const bToken = tokens.pop();
         const oper = opers.pop();
-        if (oper in Operators.BOOL_UN && Parser.checkTypes([b, undefined], Rules.BOOL_UN, fields)) {
-            Parser.buildQuery(queryValues, oper, fields);
-            values.push(Tokens.BOOL);
+        const operation = MONGO_OPERS[oper];
+        if (oper in Operators2.BOOL_UN && Rules.BOOL_UN.includes([bToken, undefined])) {
+            if (bIsField) {
+                bValue = Parser.booleanEqualsTrue(bValue, true);
+            }
+            tokens.push(Tokens.BOOL);
+            const result = operation(bValue, bIsField, undefined, undefined);
+            query.push(result);
             return true;
         }
-        if (values.length === 0)
+
+        if (tokens.length === 0) {
             return false;
-        const a = values.pop();
-        if (oper in Operators.NUM_OPER && Parser.checkTypes([a, b], Rules.NUM_OPER, fields)) {
-            Parser.buildQuery(queryValues, oper, fields);
-            values.push(Tokens.NUM);
+        }
+
+        let aValue = query.pop();
+        const aIsField = isNativeType(NativeTypes.STRING, aValue) && (aValue as string) in fields;
+        const aToken = tokens.pop();
+        if (oper in Operators2.NUM_OPER && Rules.NUM_OPER.includes([aToken, bToken])) {
+            tokens.push(Tokens.NUM);
+            const result = operation(aValue, aIsField, bValue, bIsField);
+            query.push(result);
             return true;
         }
+
         if (
-            (oper in Operators.BOOL_BIN && Parser.checkTypes([a, b], Rules.BOOL_BIN, fields))
-            || (oper in Operators.NUM_EQ && Parser.checkTypes([a, b], Rules.NUM_EQ, fields))
-            || (oper in Operators.STR && Parser.checkTypes([a, b], Rules.STR, fields) && a in fields && !(b in fields))
-            || (oper in Operators.EQUAL && Parser.checkTypes([a, b], Rules.EQUAL, fields))
-            || (oper in Operators.ARR && Parser.checkTypes([a, b], Rules.ARR, fields) && a in fields && !(b in fields))
+            (oper in Operators2.NUM_EQ && Rules.NUM_EQ.includes([aToken, bToken]))
+            || (oper in Operators2.EQUAL && Rules.EQUAL.includes([aToken, bToken]))
         ) {
-            Parser.buildQuery(queryValues, oper, fields);
-            values.push(Tokens.BOOL);
+            let valid: boolean;
+            [valid, aValue, bValue] = Parser.checkDate(aToken, aValue, aIsField, bToken, bValue, bIsField);
+            if (!valid) {
+                return false;
+            }
+            if (aToken == Tokens.NUM && aIsField) {
+                Parser.fieldNotNull(aValue, tokens, opers, query);
+            }
+            if (bToken == Tokens.NUM && bIsField) {
+                Parser.fieldNotNull(bValue, tokens, opers, query);
+            }
+            tokens.push(Tokens.BOOL);
+            const result = operation(aValue, aIsField, bValue, bIsField);
+            query.push(result);
+            return true;
+        }
+
+        if ((oper in Operators2.BOOL_BIN && Rules.BOOL_BIN.includes([aToken, bToken]))) {
+            if (aIsField) {
+                aValue = Parser.booleanEqualsTrue(aValue, true);
+            }
+            if (bIsField) {
+                bValue = Parser.booleanEqualsTrue(bValue, true);
+            }
+            tokens.push(Tokens.BOOL);
+            const result = operation(aValue, aIsField, bValue, bIsField);
+            query.push(result);
+            return true;
+        }
+
+        if (
+            (oper in Operators2.STR && Rules.STR.includes([aToken, bToken]) && aIsField && !bIsField)
+            || (oper in Operators2.ARR && Rules.ARR.includes([aToken, bToken]) && aIsField && !bIsField)
+        ) {
+            tokens.push(Tokens.BOOL);
+            const result = operation(aValue, aIsField, bValue, bIsField);
+            query.push(result);
             return true;
         }
         return false;
     }
 
-    private static checkTypes(pair: Rule, array: Rule[], fields: InventoryFields): boolean {
-        if (pair[0] in fields)
-            pair[0] = fields[pair[0]].type;
-        if (pair[1] in fields)
-            pair[1] = fields[pair[1]].type;
-        return array.includes(pair);
+    private static checkDate(aToken: Tokens,
+                            aValue: Object,
+                            aIsField: boolean,
+                            bToken: Tokens,
+                            bValue: Object,
+                            bIsField: boolean): [boolean, Object, Object] {
+        let valid = true;
+        if (aToken == Tokens.DT || bToken == Tokens.DT) {
+            if (!aIsField) {
+                aValue = new Date(aValue as string);
+                if (isNaN((aValue as Date).getTime())) {
+                    valid = false;
+                }
+            }
+            if (!bIsField) {
+                bValue = new Date(bValue as string);
+                if (isNaN((bValue as Date).getTime())) {
+                    valid = false;
+                }
+            }
+        }
+        return [valid, aValue, bValue];
     }
 
-    private static buildQuery(queryValues: Array<string | Object>, oper: string, fields: InventoryFields): void {
-        let b = queryValues.pop();
-        let a = b;
-        if (!(oper in Operators.BOOL_UN))
-            a = queryValues.pop();
-        const operation = MONGO_OPERATORS[oper];
-        const result = operation(a, b, fields);
-        queryValues.push(result);
+    private static fieldNotNull(value: Object,
+                                tokens: Tokens[],
+                                opers: string[],
+                                query: Object[]) {
+        const checkNotNull = MONGO_OPERS[Operators.NOT_EQUALS](value, true, null, false);
+        tokens.unshift(Tokens.BOOL);
+        query.unshift(checkNotNull);
+        opers.unshift(Operators.AND_SPECIAL);
+    }
+
+    private static booleanEqualsTrue(value: Object, isField: boolean): Object {
+        return MONGO_OPERS[Operators.EQUALS](value, isField, true, false);
     }
 }

@@ -4,10 +4,10 @@ import User from '../models/user';
 import { NativeTypes, isNativeType } from '../types/nativeTypes';
 import { Regex, insensitive, isType } from '../types/regex';
 import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
-import { IInventory, InventoryDataTypes, InventoryDataTypes2, ParserTokens, ParserTokens2 } from '../types/inventory';
+import { IInventory, InventoryDataTypes2, Tokens2 } from '../types/inventory';
 import { AssignedRole, UserRoles, IUser } from '../types/user';
 import { GeneralUseStatus, UserStatus } from '../types/status';
-import { Operators } from '../types/queryOperators';
+import { Operators2 } from '../types/queryOperators';
 import { insensitiveInventory } from './_inventoryFields.controller';
 import Product from '../models/product';
 
@@ -89,8 +89,8 @@ class InventoriesController {
             || !InventoryDataTypes2.includes(insType)
             || insField in insentiveFields
             || InventoryDataTypes2.includes(insField)
-            || ParserTokens2.includes(insField)
-            || insField in Operators.ALL
+            || Tokens2.includes(insField)
+            || insField in Operators2.ALL
         ) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid inventory field' });
             return;
