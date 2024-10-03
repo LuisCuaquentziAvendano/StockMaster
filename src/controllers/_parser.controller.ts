@@ -193,6 +193,12 @@ export class Parser {
         const aIsField = isNativeType(NativeTypes.STRING, aValue) && (aValue as string) in fields;
         const aToken = tokens.pop();
         if (oper in Operators2.NUM_OPER && Rules.NUM_OPER.includes([aToken, bToken])) {
+            if (aToken == Tokens.NUM && aIsField) {
+                Parser.fieldNotNull(aValue, tokens, opers, query);
+            }
+            if (bToken == Tokens.NUM && bIsField) {
+                Parser.fieldNotNull(bValue, tokens, opers, query);
+            }
             tokens.push(Tokens.NUM);
             const result = operation(aValue, aIsField, bValue, bIsField);
             query.push(result);
@@ -203,10 +209,12 @@ export class Parser {
             (oper in Operators2.NUM_EQ && Rules.NUM_EQ.includes([aToken, bToken]))
             || (oper in Operators2.EQUAL && Rules.EQUAL.includes([aToken, bToken]))
         ) {
-            let valid: boolean;
-            [valid, aValue, bValue] = Parser.checkDate(aToken, aValue, aIsField, bToken, bValue, bIsField);
-            if (!valid) {
-                return false;
+            if (aToken == Tokens.DT || bToken == Tokens.DT) {
+                let valid: boolean;
+                [valid, aValue, bValue] = Parser.checkDate(aValue, aIsField, bValue, bIsField);
+                if (!valid) {
+                    return false;
+                }
             }
             if (aToken == Tokens.NUM && aIsField) {
                 Parser.fieldNotNull(aValue, tokens, opers, query);
@@ -245,25 +253,21 @@ export class Parser {
         return false;
     }
 
-    private static checkDate(aToken: Tokens,
-                            aValue: Object,
+    private static checkDate(aValue: Object,
                             aIsField: boolean,
-                            bToken: Tokens,
                             bValue: Object,
                             bIsField: boolean): [boolean, Object, Object] {
         let valid = true;
-        if (aToken == Tokens.DT || bToken == Tokens.DT) {
-            if (!aIsField) {
-                aValue = new Date(aValue as string);
-                if (isNaN((aValue as Date).getTime())) {
-                    valid = false;
-                }
+        if (!aIsField) {
+            aValue = new Date(aValue as string);
+            if (isNaN((aValue as Date).getTime())) {
+                valid = false;
             }
-            if (!bIsField) {
-                bValue = new Date(bValue as string);
-                if (isNaN((bValue as Date).getTime())) {
-                    valid = false;
-                }
+        }
+        if (!bIsField) {
+            bValue = new Date(bValue as string);
+            if (isNaN((bValue as Date).getTime())) {
+                valid = false;
             }
         }
         return [valid, aValue, bValue];
