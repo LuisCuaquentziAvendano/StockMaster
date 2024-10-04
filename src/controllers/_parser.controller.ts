@@ -1,8 +1,9 @@
 import { Operators, Operators2 } from '../types/queryOperators';
 import { Tokens, InventoryFields, inventoryTypeToToken } from '../types/inventory';
-import { Regex, isType, insensitive, scapeMongoChars, scapeRegexChars } from '../types/regex';
-import { isNativeType, NativeTypes } from '../types/nativeTypes';
-import { productFieldNameDB } from '../types/product';
+import { Regex, isType, scapeRegexChars } from '../types/regex';
+import { isObject } from '../types/nativeTypes';
+import { FIELDS } from '../types/product';
+import { FieldsMap, insensitive, InsensitiveString } from '../types/insensitive';
 
 const MONGO_OPERS: Record<string, (a: Object, b: Object) => Object> = Object.freeze({
     [Operators.SUM]: (a: Object, b: Object) => ({ $add: [a, b] }),
@@ -16,8 +17,8 @@ const MONGO_OPERS: Record<string, (a: Object, b: Object) => Object> = Object.fre
     [Operators.GREATER_THAN]: (a: Object, b: Object) => ({ $expr: { $gt: [a, b] } }),
     [Operators.LESS_THAN_EQUAL]: (a: Object, b: Object) => ({ $expr: { $lte: [a, b] } }),
     [Operators.GREATER_THAN_EQUAL]: (a: Object, b: Object) => ({ $expr: { $gte: [a, b] } }),
-    [Operators.LIKE]: (a: Object, b: Object) => ({ [a as string]: { $regex: b as string, $options: 'i' } }),
-    [Operators.INCLUDES]: (a: Object, b: Object) => ({ [a as string]: { $in: [b] } }),
+    [Operators.LIKE]: (a: Object, b: Object) => ({ [formatField2(a as string)]: { $regex: b as string, $options: 'i' } }),
+    [Operators.INCLUDES]: (a: Object, b: Object) => ({ [formatField2(a as string)]: { $in: [b] } }),
     [Operators.NOT]: (a: Object, b: Object) => ({ $not: a }),
     [Operators.AND]: (a: Object, b: Object) => ({ $and: [a, b] }),
     [Operators.OR]: (a: Object, b: Object) => ({ $or: [a, b] }),
@@ -28,17 +29,32 @@ function formatNumberField(field: string): Object {
     return { $toDouble: field };
 }
 
+function formatStringValue(s: string): Object {
+    return { $literal: s };
+}
+
+function formatField(field: string) {
+    return '$' + FIELDS + '.' + field;
+}
+
+function formatField2(field: string) {
+    return FIELDS + '.' + field;
+}
+
 export class Parser {
-    static evalQuery(expression: string, fields: InventoryFields): [boolean, Object] {
+    static evalQuery(expression: string, fields: InventoryFields, map: FieldsMap): [boolean, Object] {
         if (isType(Regex.SPACE, expression)) {
             return [true, {}];
         }
         const QUERY = new RegExp(`${Regex.STRING}|${Regex.INVENTORY_FIELD}|${Regex.FLOAT}|${Object.keys(Operators2.ALL).map(k => scapeRegexChars(k)).join('|')}|${Tokens.TRUE}|${Tokens.FALSE}|${Tokens.NULL}|${scapeRegexChars(Operators.OPEN_PAREN)}|${scapeRegexChars(Operators.CLOSE_PAREN)}|.`);
         let tokens: Array<[Tokens, boolean]> = [];
         let opers: string[] = [];
-        let query: Array<Object> = [];
+        let query: any[] = [];
         let validQuery = true;
         const matches = expression.match(QUERY);
+        if (!matches) {
+            return [false, {}];
+        }
         for (let i = 0; i < matches.length && validQuery; i++) {
             if (isType(Regex.SPACE, matches[i]))
                 continue;
@@ -78,9 +94,11 @@ export class Parser {
                 query.push(null);
                 continue;
             }
-            if (matches[i] in fields) {
-                tokens.push([inventoryTypeToToken(fields[matches[i]].type), true]);
-                query.push(matches[i]);
+            if (matches[i] in map) {
+                const insensitiveField = matches[i] as InsensitiveString;
+                const sensitiveField = map[insensitiveField];
+                tokens.push([inventoryTypeToToken(fields[sensitiveField].type), true]);
+                query.push(insensitiveField);
                 continue;
             }
             if (matches[i] in Operators2.ALL) {
@@ -98,7 +116,8 @@ export class Parser {
             validQuery = Parser.solve(validQuery, tokens, opers, query);
         }
         validQuery = Parser.solve(validQuery, tokens, opers, query);
-        const finalQuery = validQuery && query.length == 1 && isNativeType(NativeTypes.OBJECT, query[0]) ? query[0] : {};
+        const finalQuery = validQuery && query.length == 1
+            && isObject(query[0]) ? query[0] : {};
         return [validQuery, finalQuery];
     }
 
@@ -112,7 +131,7 @@ export class Parser {
             if (token != Tokens.BOOL) {
                 return false;
             }
-            if (!isNativeType(NativeTypes.OBJECT, query[0])) {
+            if (!isObject(query[0])) {
                 query[0] = Parser.booleanEqualsTrue(query[0]);
             }
             return true;
@@ -124,7 +143,7 @@ export class Parser {
 
         const [bToken, bIsField] = tokens.pop();
         let bValue = query.pop();
-        bValue = bIsField ? productFieldNameDB(bValue as string) : bValue;
+        bValue = bIsField && bToken != Tokens.STR && bToken != Tokens.ARR ? formatField(bValue as string) : bValue;
         const oper = opers.pop();
         const operation = MONGO_OPERS[oper];
 
@@ -143,7 +162,7 @@ export class Parser {
 
         const [aToken, aIsField] = tokens.pop();
         let aValue = query.pop();
-        aValue = aIsField ? productFieldNameDB(aValue as string) : aValue;
+        aValue = aIsField && aToken != Tokens.STR && aToken != Tokens.ARR ? formatField(aValue as string) : aValue;
         let valid = false;
         let toPush: [Tokens, boolean] = [Tokens.BOOL, false];
 
@@ -178,7 +197,7 @@ export class Parser {
             && aIsField && !bIsField
             && (oper in Operators2.STR || oper in Operators2.EQUAL)
         ) {
-            bValue = oper in Operators2.EQUAL ? scapeMongoChars(bValue as string) : bValue;
+            bValue = oper in Operators2.EQUAL ? formatStringValue(bValue as string) : bValue;
             bValue = oper in Operators2.STR ? scapeRegexChars(bValue as string) : bValue;
             valid = true;
         }

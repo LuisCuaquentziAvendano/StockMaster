@@ -2,14 +2,15 @@ import { Request, Response } from 'express';
 import { startSession, mongo, UpdateWriteOpResult } from 'mongoose';
 import Inventory from '../models/inventory';
 import User from '../models/user';
-import { NativeTypes, isNativeType } from '../types/nativeTypes';
+import { isObject } from '../types/nativeTypes';
 import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
 import { IInventory } from '../types/inventory';
-import { AssignedRole, UserRoles, IUser, UserRoles2 } from '../types/user';
+import { AssignedRole, UserRoles, IUser } from '../types/user';
 import { GeneralUseStatus, UserStatus } from '../types/status';
 import Product from '../models/product';
-import { productFieldNameDB } from '../types/product';
+import { FIELDS } from '../types/product';
 import { InventoriesValidations } from './_inventoriesValidations.controller';
+import { insensitive, SensitiveString } from '../types/insensitive';
 
 export class InventoriesController {
     static getInventory(req: Request, res: Response) {
@@ -21,11 +22,11 @@ export class InventoriesController {
         };
         const assignedRole = inventory.roles.find(role => role.user.toString() == user._id.toString());
         data.role = assignedRole.role;
-        if ([UserRoles.ADMIN, UserRoles.QUERY].includes(assignedRole.role)) {
+        if ([UserRoles.ADMIN, UserRoles.STOCK].includes(assignedRole.role)) {
             data.fields = inventory.fields;
         } else {
             const fields: Record<string, string> = {};
-            Object.keys(inventory.fields).forEach(field => {
+            Object.keys(inventory.fields).forEach((field: SensitiveString) => {
                 if (inventory.fields[field].visible) {
                     fields[field] = inventory.fields[field].type;
                 }
@@ -36,8 +37,12 @@ export class InventoriesController {
     }
 
     static createInventory(req: Request, res: Response) {
+        if (!isObject(req.body)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
+            return;
+        }
         const name = req.body.name;
-        if (!InventoriesValidations.isValidName(name)) {
+        if (!InventoriesValidations._name(name)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid inventory data' });
             return;
         }
@@ -61,7 +66,7 @@ export class InventoriesController {
 
     static deleteInventory(req: Request, res: Response) {
         const inventory = req.inventory;
-        let session: any;
+        let session: mongo.ClientSession;
         startSession().then(_s => {
             session = _s;
             session.startTransaction();
@@ -98,20 +103,21 @@ export class InventoriesController {
             return;
         }
         let validFields = true;
-        const inventory = req.body.inventory;
+        const inventory = req.inventory;
         const setNulls: Record<string, null> = {};
+        const fieldsMap = InventoriesValidations.insensitiveFields(inventory.fields);
         fieldsToSet.forEach(objectData => {
-            if (!validFields || !isNativeType(NativeTypes.OBJECT, objectData)) {
+            if (!validFields || !isObject(objectData)) {
                 validFields = false;
                 return;
             }
             const field = objectData.field;
-            const type = InventoriesValidations.validType(objectData.type);
+            const type = InventoriesValidations.dataType(objectData.type);
             const visible = objectData.visible;
             if (
                 !type
-                || !InventoriesValidations.isValidNewField(field, inventory.fields)
-                || !InventoriesValidations.isValidVisible(visible)
+                || !InventoriesValidations.newField(field, fieldsMap)
+                || !InventoriesValidations.visible(visible)
             ) {
                 validFields = false;
                 return;
@@ -120,7 +126,7 @@ export class InventoriesController {
                 type,
                 visible
             };
-            const fieldName = productFieldNameDB(field);
+            const fieldName = InventoriesController.formatProductField(field);
             setNulls[fieldName] = null;
         });
         if (!validFields) {
@@ -158,15 +164,20 @@ export class InventoriesController {
     }
 
     static updateField(req: Request, res: Response) {
+        if (!isObject(req.body)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
+            return;
+        }
         const inventory = req.inventory;
-        const field = InventoriesValidations.validExistingField(req.body.field, inventory.fields);
+        const fieldsMap = InventoriesValidations.insensitiveFields(inventory.fields);
+        const field = InventoriesValidations.existingField(req.body.field, fieldsMap);
         const newName = req.body.newName;
         const visible = req.body.visible;
         let setNewName = false;
-        if (field && InventoriesValidations.isValidVisible(visible)) {
+        if (field && InventoriesValidations.visible(visible)) {
             inventory.fields[field].visible = visible;
         }
-        if (field && InventoriesValidations.isValidNewField(newName, inventory.fields)) {
+        if (field && InventoriesValidations.newField(newName, fieldsMap)) {
             const oldField = inventory.fields[field];
             inventory.fields[newName] = {
                 type: oldField.type,
@@ -175,8 +186,8 @@ export class InventoriesController {
             delete inventory.fields[field];
             setNewName = true;
         }
-        const oldNameDB = productFieldNameDB(field);
-        const newNameDB = productFieldNameDB(field);
+        const oldNameDB = InventoriesController.formatProductField(field);
+        const newNameDB = InventoriesController.formatProductField(field);
         let session: mongo.ClientSession;
         startSession().then(_s => {
             session = _s;
@@ -191,8 +202,7 @@ export class InventoriesController {
                     Product.updateMany({
                         inventory: inventory._id
                     }, {
-                        $set: { [newNameDB]: [oldNameDB] },
-                        $unset: { [oldNameDB]: '' }
+                        $set: { [newNameDB]: [oldNameDB] }
                     })
                 ]);
             }
@@ -204,6 +214,15 @@ export class InventoriesController {
                 }),
                 (Promise.resolve() as unknown as UpdateWriteOpResult)
             ]);
+        }).then(() => {
+            if (newName) {
+                return Product.updateMany({
+                    inventory: inventory._id
+                }, {
+                    $unset: { [oldNameDB]: '' }
+                });
+            }
+            return (Promise.resolve() as unknown as UpdateWriteOpResult);
         }).then(() => {
             return session.commitTransaction();
         }).then(() => {
@@ -219,14 +238,19 @@ export class InventoriesController {
     }
 
     static deleteField(req: Request, res: Response) {
+        if (!isObject(req.body)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
+            return;
+        }
         const inventory = req.inventory;
-        const field = InventoriesValidations.validExistingField(req.body.field, inventory.fields);
+        const fieldsMap = InventoriesValidations.insensitiveFields(inventory.fields);
+        const field = InventoriesValidations.existingField(req.body.field, fieldsMap);
         if (!field) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Field not found' });
             return;
         }
         delete inventory.fields[field];
-        const fieldName = productFieldNameDB(field);
+        const fieldName = InventoriesController.formatProductField(field);
         let session: mongo.ClientSession;
         startSession().then(_s => {
             session = _s;
@@ -277,10 +301,14 @@ export class InventoriesController {
     }
 
     static modifyPermissions(req: Request, res: Response) {
+        if (!isObject(req.body)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
+            return;
+        }
         const email = req.body.email;
         const role = req.body.role;
         const user = req.user;
-        if (!InventoriesValidations.isValidRoleAssignment(email, role, user)) {
+        if (!InventoriesValidations.roleAssignment(email, role, user)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid permission data' });
             return;
         }
@@ -312,6 +340,10 @@ export class InventoriesController {
                 res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
             }
         });
+    }
+
+    private static formatProductField(field: string) {
+        return FIELDS + '.' + insensitive(field);
     }
 }
 

@@ -12,18 +12,23 @@ import { IInventory } from '../types/inventory';
 import { Schema } from 'mongoose';
 import Product from '../models/product';
 import { UsersValidations } from './_usersValidations.controller';
+import { isObject } from '../types/nativeTypes';
 
 class UsersController {
     static readonly ENCRYPTION_ROUNDS = 10;
 
     static register(req: Request, res: Response) {
+        if (!isObject(req.body)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
+            return;
+        }
         const name = req.body.name;
         const email = req.body.email;
         const password = req.body.password;
         if (
-            !UsersValidations.isValidName(name)
-            || !UsersValidations.isValidEmail(email)
-            || !UsersValidations.isValidPassword(password)
+            !UsersValidations._name(name)
+            || !UsersValidations.email(email)
+            || !UsersValidations.password(password)
         ) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid user data' });
             return;
@@ -37,7 +42,7 @@ class UsersController {
         let session: mongo.ClientSession;
         Promise.all([
             startSession(),
-            User.countDocuments({ email: user.email, status: UserStatus.ACTIVE }),
+            User.countDocuments({ email: user.email }),
             bcrypt.hash(user.password, UsersController.ENCRYPTION_ROUNDS)
         ]).then(result => {
             session = result[0];
@@ -74,11 +79,15 @@ class UsersController {
     }
 
     static login(req: Request, res: Response) {
+        if (!isObject(req.body)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
+            return;
+        }
         const email = req.body.email;
         const password = req.body.password;
         if (
-            !UsersValidations.isValidEmail(email)
-            || !UsersValidations.isValidPassword(password)
+            !UsersValidations.email(email)
+            || !UsersValidations.password(password)
         ) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid user data' });
             return;
@@ -112,7 +121,7 @@ class UsersController {
 
     static getData(req: Request, res: Response) {
         const user = req.user;
-        const data: IUser = {
+        const data = {
             email: user.email,
             name: user.name
         };
@@ -170,14 +179,14 @@ class UsersController {
         ]).then(result => {
             session = result[0];
             session.startTransaction();
-            const inventoriesOwned: IInventory[] = result[1];
+            const inventoriesOwned = result[1];
             return Promise.all([
                 User.updateOne({
                     _id: user._id
                 }, {
                     status: UserStatus.DELETED
                 }),
-                ...inventoriesOwned.map(inventory => [
+                ...inventoriesOwned.flatMap(inventory => [
                     Inventory.updateOne({
                         _id: inventory._id
                     }, {
@@ -214,8 +223,12 @@ class UsersController {
     }
 
     static updateData(req: Request, res: Response) {
+        if (!isObject(req.body)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
+            return;
+        }
         const name = req.body.name;
-        if (!UsersValidations.isValidName(name)) {
+        if (!UsersValidations._name(name)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid user data' });
             return;
         }
@@ -232,8 +245,12 @@ class UsersController {
     }
 
     static updatePassword(req: Request, res: Response) {
+        if (!isObject(req.body)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
+            return;
+        }
         const password = req.body.password;
-        if (!UsersValidations.isValidPassword(password)) {
+        if (!UsersValidations.password(password)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid user data' });
             return;
         }

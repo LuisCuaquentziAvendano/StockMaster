@@ -1,19 +1,20 @@
 import { Schema } from 'mongoose';
 import { AssignedRole } from "./user";
 import { GeneralUseStatus } from './status';
+import { SensitiveString } from './insensitive';
 
 export interface IInventory {
     _id?: Schema.Types.ObjectId;
     name: string;
     fields?: InventoryFields,
-    roles: Array<AssignedRole>,
+    roles: AssignedRole[],
     status: GeneralUseStatus
 }
 
-export type InventoryFields = Record<string, InventoryField>;
+export type InventoryFields = Record<SensitiveString, InventoryField> & { __brand: "InventoryFields" };
 
 export interface InventoryField {
-    type?: InventoryDataTypes;
+    type: InventoryDataTypes;
     visible: boolean;
 }
 
@@ -35,7 +36,7 @@ export const InventoryDataTypes2 = Object.freeze([
     InventoryDataTypes.IMAGE,
     InventoryDataTypes.INTEGER,
     InventoryDataTypes.STRING
-]);
+]) as string[];
 
 export enum Tokens {
     NUM = InventoryDataTypes.FLOAT,
@@ -57,7 +58,7 @@ export const Tokens2 = Object.freeze([
     Tokens.NULL,
     Tokens.TRUE,
     Tokens.FALSE
-]);
+]) as string[];
 
 export function inventoryTypeToToken(type: InventoryDataTypes): Tokens {
     if (type == InventoryDataTypes.ARRAY)

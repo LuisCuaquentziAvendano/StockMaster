@@ -1,6 +1,6 @@
 import { Schema } from 'mongoose';
 import { GeneralUseStatus } from './status';
-import { insensitive } from './regex';
+import { InsensitiveString } from './insensitive';
 
 export interface IProduct {
     _id?: Schema.Types.ObjectId;
@@ -9,8 +9,6 @@ export interface IProduct {
     status: GeneralUseStatus
 }
 
-export type ProductFields = Record<string, string>;
+export type ProductFields = Record<InsensitiveString, Object> & { __brand: "ProductFields" };
 
-export function productFieldNameDB(field: string): string {
-    return 'fields.' + insensitive(field);
-}
+export const FIELDS = 'fields';

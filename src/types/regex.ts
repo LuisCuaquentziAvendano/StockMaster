@@ -14,10 +14,6 @@ export function isType(regex: Regex, s: string): boolean {
     return (new RegExp('^' + regex + '$', 'i')).test(s);
 }
 
-export function insensitive(s: string): string {
-    return s.toLowerCase();
-}
-
 export function scapeMongoChars(s: string): string {
     return s.replace(new RegExp(/^\$/), '\\$');
 }
