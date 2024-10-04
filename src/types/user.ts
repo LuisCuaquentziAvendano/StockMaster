@@ -17,6 +17,13 @@ export enum UserRoles {
     NONE = 'none'
 }
 
+export const UserRoles2 = Object.freeze([
+    UserRoles.ADMIN,
+    UserRoles.STOCK,
+    UserRoles.QUERY,
+    UserRoles.NONE
+]);
+
 export interface AssignedRole {
     user: Schema.Types.ObjectId;
     role: UserRoles;

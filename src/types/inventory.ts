@@ -13,7 +13,7 @@ export interface IInventory {
 export type InventoryFields = Record<string, InventoryField>;
 
 export interface InventoryField {
-    type: InventoryDataTypes;
+    type?: InventoryDataTypes;
     visible: boolean;
 }
 
@@ -27,7 +27,7 @@ export enum InventoryDataTypes {
     IMAGE = 'image'
 }
 
-export const InventoryDataTypes2: string[] = [
+export const InventoryDataTypes2 = Object.freeze([
     InventoryDataTypes.ARRAY,
     InventoryDataTypes.BOOLEAN,
     InventoryDataTypes.DATETIME,
@@ -35,7 +35,7 @@ export const InventoryDataTypes2: string[] = [
     InventoryDataTypes.IMAGE,
     InventoryDataTypes.INTEGER,
     InventoryDataTypes.STRING
-];
+]);
 
 export enum Tokens {
     NUM = InventoryDataTypes.FLOAT,
@@ -48,7 +48,7 @@ export enum Tokens {
     FALSE = 'false'
 }
 
-export const Tokens2: string[] = [
+export const Tokens2 = Object.freeze([
     Tokens.NUM,
     Tokens.STR,
     Tokens.BOOL,
@@ -57,7 +57,7 @@ export const Tokens2: string[] = [
     Tokens.NULL,
     Tokens.TRUE,
     Tokens.FALSE
-];
+]);
 
 export function inventoryTypeToToken(type: InventoryDataTypes): Tokens {
     if (type == InventoryDataTypes.ARRAY)

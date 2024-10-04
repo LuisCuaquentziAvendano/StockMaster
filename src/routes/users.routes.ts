@@ -15,12 +15,12 @@ router.get('/generateNewToken',
 router.get('/getInventories',
     middlewares.validateToken,
     UsersController.getInventories);
-router.put('/editData',
+router.put('/updateData',
     middlewares.validateToken,
-    UsersController.editData);
-router.put('/editPassword',
+    UsersController.updateData);
+router.put('/updatePassword',
     middlewares.validateToken,
-    UsersController.editPassword);
+    UsersController.updatePassword);
 router.delete('/deleteUser',
     middlewares.validateToken,
     UsersController.deleteUser);

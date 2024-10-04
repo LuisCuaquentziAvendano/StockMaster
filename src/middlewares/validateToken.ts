@@ -5,11 +5,16 @@ import { IUser } from '../types/user';
 import { LoginJwtPayload } from '../types/loginJwtPayload';
 import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
 import { UserStatus } from '../types/status';
+import { isNativeType, NativeTypes } from '../types/nativeTypes';
 
 function validateToken(req: Request, res: Response, next: NextFunction): void {
     const token = req.headers.authorization;
     const secretKey = process.env.JWT_KEY;
     let payload: LoginJwtPayload;
+    if (!isNativeType(NativeTypes.STRING, token)) {
+        res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
+        return;
+    }
     try {
         payload = jwt.verify(token, secretKey) as LoginJwtPayload;
         User.findOne({

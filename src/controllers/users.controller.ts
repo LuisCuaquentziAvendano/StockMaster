@@ -1,29 +1,29 @@
 import { Request, Response } from 'express';
+import { startSession, mongo } from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { isEmail } from 'validator';
 import User from '../models/user';
-import { IUser } from '../types/user';
+import { IUser, UserRoles } from '../types/user';
 import { GeneralUseStatus, UserStatus } from '../types/status';
 import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
-import { NativeTypes, isNativeType } from '../types/nativeTypes';
-import { isType, Regex } from '../types/regex';
 import { LoginJwtPayload } from '../types/loginJwtPayload';
 import Inventory from '../models/inventory';
 import { IInventory } from '../types/inventory';
 import { Schema } from 'mongoose';
+import Product from '../models/product';
+import { UsersValidations } from './_usersValidations.controller';
 
 class UsersController {
+    static readonly ENCRYPTION_ROUNDS = 10;
+
     static register(req: Request, res: Response) {
         const name = req.body.name;
         const email = req.body.email;
         const password = req.body.password;
-        if (!isNativeType(NativeTypes.STRING, name)
-            || !isType(Regex.USER_NAME, name)
-            || !isNativeType(NativeTypes.STRING, email)
-            || !isEmail(email)
-            || !isNativeType(NativeTypes.STRING, password)
-            || !isType(Regex.USER_PASSWORD, password)
+        if (
+            !UsersValidations.isValidName(name)
+            || !UsersValidations.isValidEmail(email)
+            || !UsersValidations.isValidPassword(password)
         ) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid user data' });
             return;
@@ -32,13 +32,18 @@ class UsersController {
             name,
             email,
             password,
-            status: UserStatus.ACTIVE  // debe ser estatus nuevo
+            status: UserStatus.ACTIVE  // status should be new
         };
+        let session: mongo.ClientSession;
         Promise.all([
-            User.countDocuments({ email: user.email }),
-            bcrypt.hash(user.password, 10)
+            startSession(),
+            User.countDocuments({ email: user.email, status: UserStatus.ACTIVE }),
+            bcrypt.hash(user.password, UsersController.ENCRYPTION_ROUNDS)
         ]).then(result => {
-            const [docs, passwordHash] = result;
+            session = result[0];
+            session.startTransaction();
+            const docs = result[1];
+            const passwordHash = result[2];
             if (docs > 0) {
                 res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Email already registered' });
                 throw new Error('');
@@ -47,18 +52,23 @@ class UsersController {
             return User.create(user);
         }).then((userCreated: IUser) => {
             const token = UsersController.createToken(userCreated._id);
-            return User.findOneAndUpdate({
+            return User.updateOne({
                 _id: userCreated._id
             }, {
                 token
-            }, {
-                new: true
             });
-        }).then((userUpdated: IUser) => {
-            res.status(HTTP_STATUS_CODES.CREATED).send({ authorization: userUpdated.token });  // no enviar token, solo correo de confirmación
+        }).then(() => {
+            return session.commitTransaction();
+        }).then(() => {
+            res.sendStatus(HTTP_STATUS_CODES.CREATED);  // send confirmation email
+            session.endSession();
         }).catch((error: Error) => {
             if (error.message != '') {
                 res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+            }
+            if (session) {
+                session.abortTransaction()
+                .then(() => session.endSession());
             }
         });
     }
@@ -66,10 +76,9 @@ class UsersController {
     static login(req: Request, res: Response) {
         const email = req.body.email;
         const password = req.body.password;
-        if (!isNativeType(NativeTypes.STRING, email)
-            || !isEmail(email)
-            || !isNativeType(NativeTypes.STRING, password)
-            || !isType(Regex.USER_PASSWORD, password)
+        if (
+            !UsersValidations.isValidEmail(email)
+            || !UsersValidations.isValidPassword(password)
         ) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid user data' });
             return;
@@ -131,9 +140,6 @@ class UsersController {
                 $elemMatch: { user: user._id }
             },
             status: GeneralUseStatus.ACTIVE
-        }, {
-            name: 1,
-            roles: 1
         }).then((inventories: IInventory[]) => {
             const data: Record<any, any>[] = [];
             inventories.forEach(inventory => {
@@ -144,7 +150,7 @@ class UsersController {
                     role: assignedRole.role
                 });
             });
-            res.send({ inventories: data });
+            res.send(data);
         }).catch((err) => {
             console.log(err.message);
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
@@ -153,23 +159,100 @@ class UsersController {
 
     static deleteUser(req: Request, res: Response) {
         const user = req.user;
+        let session: mongo.ClientSession;
+        Promise.all([
+            startSession(),
+            Inventory.find({
+                roles: {
+                    $elemMatch: { user: user._id, role: UserRoles.ADMIN }
+                }
+            })
+        ]).then(result => {
+            session = result[0];
+            session.startTransaction();
+            const inventoriesOwned: IInventory[] = result[1];
+            return Promise.all([
+                User.updateOne({
+                    _id: user._id
+                }, {
+                    status: UserStatus.DELETED
+                }),
+                ...inventoriesOwned.map(inventory => [
+                    Inventory.updateOne({
+                        _id: inventory._id
+                    }, {
+                        status: GeneralUseStatus.DELETED
+                    }),
+                    Product.updateMany({
+                        inventory: inventory._id
+                    }, {
+                        status: GeneralUseStatus.DELETED
+                    })
+                ]),
+                Inventory.updateMany({
+                    roles: {
+                        $elemMatch: { user: user._id }
+                    }
+                }, {
+                    $pull: {
+                        roles: { user: user._id }
+                    }
+                })
+            ]);
+        }).then(() => {
+            return session.commitTransaction();
+        }).then(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
+            session.endSession();
+        }).catch(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+            if (session) {
+                session.abortTransaction()
+                .then(() => session.endSession());
+            }
+        });
+    }
+
+    static updateData(req: Request, res: Response) {
+        const name = req.body.name;
+        if (!UsersValidations.isValidName(name)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid user data' });
+            return;
+        }
+        const user = req.user;
         User.updateOne({
             _id: user._id
         }, {
-            status: UserStatus.DELETED
+            name
         }).then(() => {
             res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
         }).catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
-        });
+        })
     }
 
-    static editData(req: Request, res: Response) {
-        // 
-    }
-
-    static editPassword(req: Request, res: Response) {
-        // 
+    static updatePassword(req: Request, res: Response) {
+        const password = req.body.password;
+        if (!UsersValidations.isValidPassword(password)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid user data' });
+            return;
+        }
+        const user = req.user;
+        const token = UsersController.createToken(user._id);
+        bcrypt.hash(password, UsersController.ENCRYPTION_ROUNDS)
+        .then(passwordHash => {
+            return User.updateOne({
+                _id: user._id
+            }, {
+                password: passwordHash,
+                token
+            });
+        }).then(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
+        }).catch((err) => {
+            console.log(err.message);
+            res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+        })
     }
 
     private static createToken(_id: Schema.Types.ObjectId): string {

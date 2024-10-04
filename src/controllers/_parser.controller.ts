@@ -2,6 +2,7 @@ import { Operators, Operators2 } from '../types/queryOperators';
 import { Tokens, InventoryFields, inventoryTypeToToken } from '../types/inventory';
 import { Regex, isType, insensitive, scapeMongoChars, scapeRegexChars } from '../types/regex';
 import { isNativeType, NativeTypes } from '../types/nativeTypes';
+import { productFieldNameDB } from '../types/product';
 
 const MONGO_OPERS: Record<string, (a: Object, b: Object) => Object> = Object.freeze({
     [Operators.SUM]: (a: Object, b: Object) => ({ $add: [a, b] }),
@@ -22,10 +23,6 @@ const MONGO_OPERS: Record<string, (a: Object, b: Object) => Object> = Object.fre
     [Operators.OR]: (a: Object, b: Object) => ({ $or: [a, b] }),
     [Operators.AND_SPECIAL]: (a: Object, b: Object) => ({ $and: [a, b] })
 });
-
-function formatField(field: string): string {
-    return '$fields.' + field;
-}
 
 function formatNumberField(field: string): Object {
     return { $toDouble: field };
@@ -127,7 +124,7 @@ export class Parser {
 
         const [bToken, bIsField] = tokens.pop();
         let bValue = query.pop();
-        bValue = bIsField ? formatField(bValue as string) : bValue;
+        bValue = bIsField ? productFieldNameDB(bValue as string) : bValue;
         const oper = opers.pop();
         const operation = MONGO_OPERS[oper];
 
@@ -146,7 +143,7 @@ export class Parser {
 
         const [aToken, aIsField] = tokens.pop();
         let aValue = query.pop();
-        aValue = aIsField ? formatField(aValue as string) : aValue;
+        aValue = aIsField ? productFieldNameDB(aValue as string) : aValue;
         let valid = false;
         let toPush: [Tokens, boolean] = [Tokens.BOOL, false];
 

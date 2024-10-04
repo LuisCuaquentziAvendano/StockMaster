@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import InventoriesController from '../controllers/inventories.controller';
+import { InventoriesController } from '../controllers/inventories.controller';
 import middlewares from '../middlewares';
 import { UserRoles } from '../types/user';
 
@@ -19,6 +19,10 @@ router.put('/createField',
     middlewares.getInventory,
     middlewares.validateRole([UserRoles.ADMIN]),
     InventoriesController.createField);
+router.put('/updateField',
+    middlewares.getInventory,
+    middlewares.validateRole([UserRoles.ADMIN]),
+    InventoriesController.updateField);
 router.put('/deleteField',
     middlewares.getInventory,
     middlewares.validateRole([UserRoles.ADMIN]),
