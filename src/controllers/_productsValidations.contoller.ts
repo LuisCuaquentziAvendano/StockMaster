@@ -7,12 +7,12 @@ import { isType, Regex } from "../types/regex";
 export class ProductsValidations {
     static validProductValue (expected: InventoryDataTypes, value: any) {
         if(isNativeType(NativeTypes.STRING, value)) {
-            if(expected === InventoryDataTypes.STRING && isType(Regex.STRING, value)) 
-                return validator.escape(value);
+            if(expected === InventoryDataTypes.STRING) 
+                return value;
             if(expected === InventoryDataTypes.INTEGER && isType(Regex.INTEGER, value))
-                return validator.escape(value);
+                return value;
             if(expected === InventoryDataTypes.FLOAT && isType(Regex.FLOAT, value)) 
-                return validator.escape(value);
+                return value;
             if(expected === InventoryDataTypes.DATETIME && isType(Regex.DATETIME, value)) 
                 return new Date(value);
         }

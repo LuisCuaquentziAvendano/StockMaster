@@ -17,7 +17,7 @@ const MONGO_OPERS: Record<string, (a: Object, b: Object) => Object> = Object.fre
     [Operators.GREATER_THAN]: (a: Object, b: Object) => ({ $expr: { $gt: [a, b] } }),
     [Operators.LESS_THAN_EQUAL]: (a: Object, b: Object) => ({ $expr: { $lte: [a, b] } }),
     [Operators.GREATER_THAN_EQUAL]: (a: Object, b: Object) => ({ $expr: { $gte: [a, b] } }),
-    [Operators.LIKE]: (a: Object, b: Object) => ({ [formatField2(a as string)]: { $regex: b as string, $options: 'i' } }),
+    [Operators.LIKE]: (a: Object, b: Object) => ({ [formatField2(a as string)]: { $regex: (b as string).slice(1, -1), $options: 'i' } }),
     [Operators.INCLUDES]: (a: Object, b: Object) => ({ [formatField2(a as string)]: { $in: [b] } }),
     [Operators.NOT]: (a: Object, b: Object) => ({ $not: a }),
     [Operators.AND]: (a: Object, b: Object) => ({ $and: [a, b] }),
@@ -30,7 +30,7 @@ function formatNumberField(field: string): Object {
 }
 
 function formatStringValue(s: string): Object {
-    return { $literal: s };
+    return { $literal: s.slice(1, -1) };
 }
 
 function formatField(field: string) {
@@ -43,27 +43,27 @@ function formatField2(field: string) {
 
 export class Parser {
     static evalQuery(expression: string, fields: InventoryFields, map: FieldsMap): [boolean, Object] {
-        if (isType(Regex.SPACE, expression)) {
+        if (expression == '' || isType(Regex.SPACE, expression)) {
             return [true, {}];
         }
-        const QUERY = new RegExp(`${Regex.STRING}|${Regex.INVENTORY_FIELD}|${Regex.FLOAT}|${Object.keys(Operators2.ALL).map(k => scapeRegexChars(k)).join('|')}|${Tokens.TRUE}|${Tokens.FALSE}|${Tokens.NULL}|${scapeRegexChars(Operators.OPEN_PAREN)}|${scapeRegexChars(Operators.CLOSE_PAREN)}|.`);
+        const QUERY = new RegExp(`${Regex.STRING}|${Regex.INVENTORY_FIELD}|${Regex.FLOAT}|${scapeRegexChars(Operators.OPEN_PAREN)}|${scapeRegexChars(Operators.CLOSE_PAREN)}|${Object.keys(Operators2.ALL).map(k => scapeRegexChars(k)).join('|')}|${Tokens.TRUE}|${Tokens.FALSE}|${Tokens.NULL}|.`, 'gi');
         let tokens: Array<[Tokens, boolean]> = [];
         let opers: string[] = [];
         let query: any[] = [];
         let validQuery = true;
-        const matches = expression.match(QUERY);
+        const matches: string[] = expression.match(QUERY);
         if (!matches) {
             return [false, {}];
         }
         for (let i = 0; i < matches.length && validQuery; i++) {
             if (isType(Regex.SPACE, matches[i]))
                 continue;
-            if (matches[i] === Operators.OPEN_PAREN) {
+            if (matches[i] == Operators.OPEN_PAREN) {
                 opers.push(matches[i]);
                 continue;
             }
-            if (matches[i] === Operators.CLOSE_PAREN) {
-                if (opers.length > 0 && opers[opers.length-1] === Operators.OPEN_PAREN)
+            if (matches[i] == Operators.CLOSE_PAREN) {
+                if (opers.length > 0 && opers[opers.length-1] == Operators.OPEN_PAREN)
                     opers.pop();
                 else if (opers.length > 0) {
                     validQuery = Parser.solve(validQuery, tokens, opers, query);
@@ -84,12 +84,12 @@ export class Parser {
                 continue;
             }
             matches[i] = insensitive(matches[i]);
-            if (matches[i] === Tokens.TRUE || matches[i] === Tokens.FALSE) {
+            if (matches[i] == Tokens.TRUE || matches[i] == Tokens.FALSE) {
                 tokens.push([Tokens.BOOL, false]);
                 query.push(matches[i] == Tokens.TRUE);
                 continue;
             }
-            if (matches[i] === Tokens.NULL) {
+            if (matches[i] == Tokens.NULL) {
                 tokens.push([Tokens.NULL, false]);
                 query.push(null);
                 continue;
@@ -102,8 +102,13 @@ export class Parser {
                 continue;
             }
             if (matches[i] in Operators2.ALL) {
-                if (opers.length == 0 || opers[opers.length-1] === Operators.OPEN_PAREN || Operators2.ALL[tokens[i][0]] > Operators2.ALL[opers[opers.length-1]])
+                if (
+                    opers.length == 0
+                    || opers[opers.length-1] == Operators.OPEN_PAREN
+                    || Operators2.ALL[matches[i]] > Operators2.ALL[opers[opers.length-1]]
+                ) {
                     opers.push(matches[i]);
+                }
                 else {
                     validQuery = Parser.solve(validQuery, tokens, opers, query);
                     i--;
@@ -126,7 +131,7 @@ export class Parser {
             return false;
         }
         
-        if (tokens.length === 1 && opers.length === 0) {
+        if (tokens.length == 1 && opers.length == 0) {
             const [token, isField] = tokens[0];
             if (token != Tokens.BOOL) {
                 return false;
@@ -137,15 +142,17 @@ export class Parser {
             return true;
         }
 
-        if (tokens.length === 0 || opers.length === 0) {
+        if (tokens.length == 0 || opers.length == 0) {
             return false;
         }
 
         const [bToken, bIsField] = tokens.pop();
         let bValue = query.pop();
-        bValue = bIsField && bToken != Tokens.STR && bToken != Tokens.ARR ? formatField(bValue as string) : bValue;
         const oper = opers.pop();
         const operation = MONGO_OPERS[oper];
+        bValue = bIsField
+            && !(bToken == Tokens.STR && oper in Operators2.STR)
+            && bToken != Tokens.ARR ? formatField(bValue as string) : bValue;
 
         // booleans: not
         if (bToken == Tokens.BOOL && oper in Operators2.BOOL_UN) {
@@ -156,13 +163,15 @@ export class Parser {
             return true;
         }
 
-        if (tokens.length === 0) {
+        if (tokens.length == 0) {
             return false;
         }
 
         const [aToken, aIsField] = tokens.pop();
         let aValue = query.pop();
-        aValue = aIsField && aToken != Tokens.STR && aToken != Tokens.ARR ? formatField(aValue as string) : aValue;
+        aValue = aIsField
+            && !(aToken == Tokens.STR && oper in Operators2.STR)
+            && aToken != Tokens.ARR ? formatField(aValue as string) : aValue;
         let valid = false;
         let toPush: [Tokens, boolean] = [Tokens.BOOL, false];
 

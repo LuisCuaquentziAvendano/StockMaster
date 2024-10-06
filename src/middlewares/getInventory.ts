@@ -4,10 +4,14 @@ import { IInventory } from '../types/inventory';
 import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
 import { GeneralUseStatus } from '../types/status';
 import { isNativeType, NativeTypes } from '../types/nativeTypes';
+import { Types } from 'mongoose';
 
 function getInventory(req: Request, res: Response, next: NextFunction): void {
     const inventoryId = req.headers.inventory;
-    if (!isNativeType(NativeTypes.STRING, inventoryId)) {
+    if (
+        !isNativeType(NativeTypes.STRING, inventoryId)
+        || !Types.ObjectId.isValid(inventoryId as string)
+    ) {
         res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid inventory ID' });
         return;
     }
@@ -22,8 +26,10 @@ function getInventory(req: Request, res: Response, next: NextFunction): void {
         req.inventory = inventory;
         next();
     }).catch((error: Error) => {
-        if (error.message != '')
+        console.log(error);
+        if (error.message != '') {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+        }
     });
 }
 

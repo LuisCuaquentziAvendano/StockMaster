@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { startSession, mongo, UpdateWriteOpResult } from 'mongoose';
+import mongoose, { startSession, mongo, UpdateWriteOpResult, Query, ObtainDocumentType } from 'mongoose';
 import Inventory from '../models/inventory';
 import User from '../models/user';
 import { isObject } from '../types/nativeTypes';
@@ -8,9 +8,9 @@ import { IInventory } from '../types/inventory';
 import { AssignedRole, UserRoles, IUser } from '../types/user';
 import { GeneralUseStatus, UserStatus } from '../types/status';
 import Product from '../models/product';
-import { FIELDS } from '../types/product';
+import { FIELDS, IProduct, ProductFields } from '../types/product';
 import { InventoriesValidations } from './_inventoriesValidations.controller';
-import { insensitive, SensitiveString } from '../types/insensitive';
+import { insensitive, InsensitiveString, SensitiveString } from '../types/insensitive';
 
 export class InventoriesController {
     static getInventory(req: Request, res: Response) {
@@ -146,7 +146,7 @@ export class InventoriesController {
                 Product.updateMany({
                     inventory: inventory._id
                 }, {
-                    $set: [setNulls]
+                    $set: setNulls
                 })
             ]);
         }).then(() => {
@@ -186,8 +186,6 @@ export class InventoriesController {
             delete inventory.fields[field];
             setNewName = true;
         }
-        const oldNameDB = InventoriesController.formatProductField(field);
-        const newNameDB = InventoriesController.formatProductField(field);
         let session: mongo.ClientSession;
         startSession().then(_s => {
             session = _s;
@@ -199,10 +197,8 @@ export class InventoriesController {
                     }, {
                         fields: inventory.fields
                     }),
-                    Product.updateMany({
+                    Product.find({
                         inventory: inventory._id
-                    }, {
-                        $set: { [newNameDB]: [oldNameDB] }
                     })
                 ]);
             }
@@ -212,17 +208,26 @@ export class InventoriesController {
                 }, {
                     fields: inventory.fields
                 }),
-                (Promise.resolve() as unknown as UpdateWriteOpResult)
+                (Promise.resolve() as unknown as IProduct[])
             ]);
-        }).then(() => {
-            if (newName) {
-                return Product.updateMany({
-                    inventory: inventory._id
-                }, {
-                    $unset: { [oldNameDB]: '' }
-                });
+        }).then((result) => {
+            if (setNewName) {
+                const data = result[1];
+                return Promise.all(
+                    data.map((product: IProduct) => {
+                        const oldFieldName = insensitive(field);
+                        const newFieldName = insensitive(newName);
+                        product.fields[newFieldName] = product.fields[oldFieldName];
+                        delete product.fields[oldFieldName];
+                        return Product.updateOne({
+                            _id: product._id
+                        }, {
+                            fields: product.fields
+                        });
+                    })
+                );
             }
-            return (Promise.resolve() as unknown as UpdateWriteOpResult);
+            return (Promise.resolve() as unknown as UpdateWriteOpResult[]);
         }).then(() => {
             return session.commitTransaction();
         }).then(() => {

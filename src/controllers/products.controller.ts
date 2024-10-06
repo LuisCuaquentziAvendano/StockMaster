@@ -8,6 +8,7 @@ import { InventoriesValidations } from './_inventoriesValidations.controller';
 import { ProductsValidations } from './_productsValidations.contoller';
 import { insensitive } from '../types/insensitive';
 import { InventoryDataTypes } from '../types/inventory';
+import { isNativeType, NativeTypes } from '../types/nativeTypes';
 
 class ProductsController {
     static getProductById(req: Request, res: Response) {
@@ -30,7 +31,7 @@ class ProductsController {
     static getProductsByQuery(req: Request, res: Response) {
         const query = req.body.query;
 
-        if (!query) {
+        if (!isNativeType(NativeTypes.STRING, query)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send('A query is required');
             return;
         }
@@ -44,13 +45,13 @@ class ProductsController {
             return;
         }
 
-        Product.find(mongooseQuery)
+        Product.find({
+            $and: [
+                { inventory: inventory._id },
+                mongooseQuery
+            ]
+        })
         .then(products => {
-            if (products.length === 0) {
-                res.status(HTTP_STATUS_CODES.NOT_FOUND).send('No products found');
-                return;
-            }
-
             res.status(HTTP_STATUS_CODES.SUCCESS).send(products);
         })
         .catch(error => {
