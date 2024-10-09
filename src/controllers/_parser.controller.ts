@@ -5,32 +5,32 @@ import { isObject } from '../types/nativeTypes';
 import { FIELDS } from '../types/product';
 import { FieldsMap, insensitive, InsensitiveString } from '../types/insensitive';
 
-const MONGO_OPERS: Record<string, (a: Object, b: Object) => Object> = Object.freeze({
-    [Operators.SUM]: (a: Object, b: Object) => ({ $add: [a, b] }),
-    [Operators.SUBTRACTION]: (a: Object, b: Object) => ({ $subtract: [a, b] }),
-    [Operators.MULTIPLICATION]: (a: Object, b: Object) => ({ $multiply: [a, b] }),
-    [Operators.DIVISION]: (a: Object, b: Object) => ({ $divide: [a, b] }),
-    [Operators.MODULUS]: (a: Object, b: Object) => ({ $mod: [a, b] }),
-    [Operators.EQUALS]: (a: Object, b: Object) => ({ $expr: { $eq: [a, b] } }),
-    [Operators.NOT_EQUALS]: (a: Object, b: Object) => ({ $expr: { $ne: [a, b] } }),
-    [Operators.LESS_THAN]: (a: Object, b: Object) => ({ $expr: { $lt: [a, b] } }),
-    [Operators.GREATER_THAN]: (a: Object, b: Object) => ({ $expr: { $gt: [a, b] } }),
-    [Operators.LESS_THAN_EQUAL]: (a: Object, b: Object) => ({ $expr: { $lte: [a, b] } }),
-    [Operators.GREATER_THAN_EQUAL]: (a: Object, b: Object) => ({ $expr: { $gte: [a, b] } }),
-    [Operators.LIKE]: (a: Object, b: Object) => ({ [formatField2(a as string)]: { $regex: (b as string).slice(1, -1), $options: 'i' } }),
-    [Operators.INCLUDES]: (a: Object, b: Object) => ({ [formatField2(a as string)]: { $in: [b] } }),
-    [Operators.NOT]: (a: Object, b: Object) => ({ $not: a }),
-    [Operators.AND]: (a: Object, b: Object) => ({ $and: [a, b] }),
-    [Operators.OR]: (a: Object, b: Object) => ({ $or: [a, b] }),
-    [Operators.AND_SPECIAL]: (a: Object, b: Object) => ({ $and: [a, b] })
+const MONGO_OPERS: Record<string, (a: any, b?: any) => any> = Object.freeze({
+    [Operators.SUM]: (a: any, b: any) => ({ $add: [a, b] }),
+    [Operators.SUBTRACTION]: (a: any, b: any) => ({ $subtract: [a, b] }),
+    [Operators.MULTIPLICATION]: (a: any, b: any) => ({ $multiply: [a, b] }),
+    [Operators.DIVISION]: (a: any, b: any) => ({ $divide: [a, b] }),
+    [Operators.MODULUS]: (a: any, b: any) => ({ $mod: [a, b] }),
+    [Operators.EQUALS]: (a: any, b: any) => ({ $expr: { $eq: [a, b] } }),
+    [Operators.NOT_EQUALS]: (a: any, b: any) => ({ $expr: { $ne: [a, b] } }),
+    [Operators.LESS_THAN]: (a: any, b: any) => ({ $expr: { $lt: [a, b] } }),
+    [Operators.GREATER_THAN]: (a: any, b: any) => ({ $expr: { $gt: [a, b] } }),
+    [Operators.LESS_THAN_EQUAL]: (a: any, b: any) => ({ $expr: { $lte: [a, b] } }),
+    [Operators.GREATER_THAN_EQUAL]: (a: any, b: any) => ({ $expr: { $gte: [a, b] } }),
+    [Operators.LIKE]: (a: any, b: any) => ({ [a]: { $regex: b, $options: 'i' } }),
+    [Operators.INCLUDES]: (a: any, b: any) => ({ [a]: { $in: [b] } }),
+    [Operators.NOT]: (a: any, b: any) => ({ $not: a }),
+    [Operators.AND]: (a: any, b: any) => ({ $and: [a, b] }),
+    [Operators.OR]: (a: any, b: any) => ({ $or: [a, b] }),
+    [Operators.AND_SPECIAL]: (a: any, b: any) => ({ $and: [a, b] })
 });
 
-function formatNumberField(field: string): Object {
+function formatNumberField(field: string): any {
     return { $toDouble: field };
 }
 
-function formatStringValue(s: string): Object {
-    return { $literal: s.slice(1, -1) };
+function formatStringValue(s: string): any {
+    return { $literal: s };
 }
 
 function formatField(field: string) {
@@ -42,7 +42,7 @@ function formatField2(field: string) {
 }
 
 export class Parser {
-    static evalQuery(expression: string, fields: InventoryFields, map: FieldsMap): [boolean, Object] {
+    static evalQuery(expression: string, fields: InventoryFields, map: FieldsMap): [boolean, any] {
         if (expression == '' || isType(Regex.SPACE, expression)) {
             return [true, {}];
         }
@@ -80,7 +80,7 @@ export class Parser {
             }
             if (isType(Regex.STRING, matches[i])) {
                 tokens.push([Tokens.STR, false]);
-                query.push(matches[i]);
+                query.push(matches[i].slice(1, -1));
                 continue;
             }
             matches[i] = insensitive(matches[i]);
@@ -126,20 +126,15 @@ export class Parser {
         return [validQuery, finalQuery];
     }
 
-    private static solve(validQuery: boolean, tokens: Array<[Tokens, boolean]>, opers: string[], query: Object[]): boolean {
+    private static solve(validQuery: boolean, tokens: Array<[Tokens, boolean]>, opers: string[], query: any[]): boolean {
         if (!validQuery) {
             return false;
         }
         
         if (tokens.length == 1 && opers.length == 0) {
-            const [token, isField] = tokens[0];
-            if (token != Tokens.BOOL) {
-                return false;
-            }
-            if (!isObject(query[0])) {
-                query[0] = Parser.booleanEqualsTrue(query[0]);
-            }
-            return true;
+            opers.push(Operators.AND);
+            tokens.push([Tokens.BOOL, false]);
+            query.push(true);
         }
 
         if (tokens.length == 0 || opers.length == 0) {
@@ -151,14 +146,15 @@ export class Parser {
         const oper = opers.pop();
         const operation = MONGO_OPERS[oper];
         bValue = bIsField
-            && !(bToken == Tokens.STR && oper in Operators2.STR)
-            && bToken != Tokens.ARR ? formatField(bValue as string) : bValue;
+            && !(oper in Operators2.STR)
+            && !(oper in Operators2.ARR)
+            ? formatField(bValue) : bValue;
 
         // booleans: not
         if (bToken == Tokens.BOOL && oper in Operators2.BOOL_UN) {
             bValue = bIsField ? Parser.booleanEqualsTrue(bValue) : bValue;
             tokens.push([Tokens.BOOL, false]);
-            const result = operation(bValue, undefined);
+            const result = operation(bValue);
             query.push(result);
             return true;
         }
@@ -170,8 +166,9 @@ export class Parser {
         const [aToken, aIsField] = tokens.pop();
         let aValue = query.pop();
         aValue = aIsField
-            && !(aToken == Tokens.STR && oper in Operators2.STR)
-            && aToken != Tokens.ARR ? formatField(aValue as string) : aValue;
+            && !(oper in Operators2.STR)
+            && !(oper in Operators2.ARR)
+            ? formatField(aValue) : aValue;
         let valid = false;
         let toPush: [Tokens, boolean] = [Tokens.BOOL, false];
 
@@ -183,16 +180,16 @@ export class Parser {
         }
 
         // numbers
-        if (
+        else if (
             aToken == Tokens.NUM && bToken == Tokens.NUM
             && (oper in Operators2.NUM_OPER || oper in Operators2.NUM_EQ || oper in Operators2.EQUAL)
         ) {
             if (aIsField) {
-                aValue = formatNumberField(aValue as string);
+                aValue = formatNumberField(aValue);
                 Parser.fieldNotNull(aValue, tokens, opers, query);
             }
             if (bIsField) {
-                bValue = formatNumberField(bValue as string);
+                bValue = formatNumberField(bValue);
                 Parser.fieldNotNull(bValue, tokens, opers, query);
             }
             const tokenResult = oper in Operators2.NUM_OPER ? Tokens.NUM : Tokens.BOOL;
@@ -201,37 +198,46 @@ export class Parser {
         }
 
         // strings
-        if (
+        else if (
             aToken == Tokens.STR && bToken == Tokens.STR
-            && aIsField && !bIsField
-            && (oper in Operators2.STR || oper in Operators2.EQUAL)
+            && (
+                oper in Operators2.EQUAL
+                || (aIsField && !bIsField && oper in Operators2.STR)
+            )
         ) {
-            bValue = oper in Operators2.EQUAL ? formatStringValue(bValue as string) : bValue;
-            bValue = oper in Operators2.STR ? scapeRegexChars(bValue as string) : bValue;
+            if (oper in Operators2.EQUAL) {
+                aValue = aIsField ? aValue : formatStringValue(aValue);
+                bValue = bIsField ? bValue : formatStringValue(bValue);
+            }
+            if (oper in Operators2.STR) {
+                aValue = formatField2(aValue);
+                bValue = scapeRegexChars(bValue);
+            }
             valid = true;
         }
 
         // dates
-        if (
-            (aToken == Tokens.DT || bToken == Tokens.DT)
+        else if (
+            (aToken == Tokens.DT || aToken == Tokens.STR)
+            && (bToken == Tokens.DT || bToken == Tokens.STR)
             && (oper in Operators2.NUM_EQ || oper in Operators2.EQUAL)
         ) {
             [valid, aValue, bValue] = Parser.checkDate(aValue, aIsField, bValue, bIsField);
         }
 
         // arrays
-        if (
+        else if (
             aToken == Tokens.ARR && bToken == Tokens.STR
             && aIsField && !bIsField
-            && (oper in Operators2.ARR)
+            && oper in Operators2.ARR
         ) {
+            aValue = formatField2(aValue);
             valid = true;
         }
 
         // nulls
-        if (
-            bToken == Tokens.NULL
-            && aIsField && !bIsField
+        else if (
+            (aToken == Tokens.NULL || bToken == Tokens.NULL)
             && oper in Operators2.EQUAL
         ) {
             valid = true;
@@ -246,34 +252,34 @@ export class Parser {
         return false;
     }
 
-    private static checkDate(aValue: Object, aIsField: boolean, bValue: Object, bIsField: boolean): [boolean, Object, Object] {
+    private static checkDate(aValue: any, aIsField: boolean, bValue: any, bIsField: boolean): [boolean, any, any] {
         let valid = true;
         if (!aIsField) {
-            aValue = new Date(aValue as string);
-            if (isNaN((aValue as Date).getTime())) {
+            aValue = new Date(aValue);
+            if (isNaN((aValue).getTime())) {
                 valid = false;
             }
         }
         if (!bIsField) {
-            bValue = new Date(bValue as string);
-            if (isNaN((bValue as Date).getTime())) {
+            bValue = new Date(bValue);
+            if (isNaN((bValue).getTime())) {
                 valid = false;
             }
         }
         return [valid, aValue, bValue];
     }
 
-    private static fieldNotNull(value: Object,
+    private static fieldNotNull(value: any,
                                 tokens: Array<[Tokens, boolean]>,
                                 opers: string[],
-                                query: Object[]) {
+                                query: any[]) {
         const checkNotNull = MONGO_OPERS[Operators.NOT_EQUALS](value, true);
         tokens.unshift([Tokens.BOOL, false]);
         query.unshift(checkNotNull);
         opers.unshift(Operators.AND_SPECIAL);
     }
 
-    private static booleanEqualsTrue(value: Object): Object {
+    private static booleanEqualsTrue(value: any): any {
         return MONGO_OPERS[Operators.EQUALS](value, true);
     }
 }

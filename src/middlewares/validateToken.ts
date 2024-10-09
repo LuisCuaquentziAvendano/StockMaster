@@ -7,7 +7,7 @@ import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
 import { UserStatus } from '../types/status';
 import { isNativeType, NativeTypes } from '../types/nativeTypes';
 
-function validateToken(req: Request, res: Response, next: NextFunction): void {
+function validateToken(req: Request, res: Response, next: NextFunction) {
     const token = req.headers.authorization;
     const secretKey = process.env.JWT_KEY;
     let payload: LoginJwtPayload;

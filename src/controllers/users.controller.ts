@@ -15,7 +15,7 @@ import { UsersValidations } from './_usersValidations.controller';
 import { isObject } from '../types/nativeTypes';
 
 class UsersController {
-    static readonly ENCRYPTION_ROUNDS = 10;
+    private static readonly ENCRYPTION_ROUNDS = 10;
 
     static register(req: Request, res: Response) {
         if (!isObject(req.body)) {
@@ -154,7 +154,7 @@ class UsersController {
             inventories.forEach(inventory => {
                 const assignedRole = inventory.roles.find(role => role.user.toString() == user._id.toString());
                 data.push({
-                    id: inventory._id,
+                    inventory: inventory._id,
                     name: inventory.name,
                     role: assignedRole.role
                 });

@@ -1,38 +1,28 @@
 import { Request, Response } from 'express';
-import mongoose, { startSession, mongo, UpdateWriteOpResult, Query, ObtainDocumentType } from 'mongoose';
+import { startSession, mongo, UpdateWriteOpResult } from 'mongoose';
 import Inventory from '../models/inventory';
 import User from '../models/user';
 import { isObject } from '../types/nativeTypes';
 import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
 import { IInventory } from '../types/inventory';
-import { AssignedRole, UserRoles, IUser } from '../types/user';
+import { AssignedRole, UserRoles, IUser, RolesShowAllFields } from '../types/user';
 import { GeneralUseStatus, UserStatus } from '../types/status';
 import Product from '../models/product';
-import { FIELDS, IProduct, ProductFields } from '../types/product';
+import { FIELDS, IProduct } from '../types/product';
 import { InventoriesValidations } from './_inventoriesValidations.controller';
-import { insensitive, InsensitiveString, SensitiveString } from '../types/insensitive';
+import { insensitive } from '../types/insensitive';
 
 export class InventoriesController {
     static getInventory(req: Request, res: Response) {
         const user = req.user;
         const inventory = req.inventory;
+        const showAllFields = RolesShowAllFields.includes(user.role);
         const data: Record<any, any> = {
-            id: inventory._id,
-            name: inventory.name
+            inventory: inventory._id,
+            name: inventory.name,
+            fields: InventoriesValidations.visibleFields(inventory.fields, showAllFields),
+            role: user.role
         };
-        const assignedRole = inventory.roles.find(role => role.user.toString() == user._id.toString());
-        data.role = assignedRole.role;
-        if ([UserRoles.ADMIN, UserRoles.STOCK].includes(assignedRole.role)) {
-            data.fields = inventory.fields;
-        } else {
-            const fields: Record<string, string> = {};
-            Object.keys(inventory.fields).forEach((field: SensitiveString) => {
-                if (inventory.fields[field].visible) {
-                    fields[field] = inventory.fields[field].type;
-                }
-            });
-            data.fields = fields;
-        }
         res.send(data);
     }
 
@@ -58,7 +48,7 @@ export class InventoriesController {
         };
         Inventory.create(inventory)
         .then((inventory: IInventory) => {
-            res.status(HTTP_STATUS_CODES.CREATED).send({ id: inventory._id });
+            res.status(HTTP_STATUS_CODES.CREATED).send({ inventory: inventory._id });
         }).catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
         });
@@ -321,6 +311,8 @@ export class InventoriesController {
         User.findOne({
             email: email,
             status: UserStatus.ACTIVE
+        }, {
+            password: 0
         }).then((user: IUser) => {
             if (!user) {
                 res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Email not registered' });

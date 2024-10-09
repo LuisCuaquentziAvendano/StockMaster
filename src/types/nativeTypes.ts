@@ -1,7 +1,8 @@
 export enum NativeTypes {
     STRING = 'string',
     BOOLEAN = 'boolean',
-    ARRAY = 'array'
+    ARRAY = 'array',
+    UNDEFINED = 'undefined'
 }
 
 export function isNativeType(dataType: NativeTypes, value: any) {

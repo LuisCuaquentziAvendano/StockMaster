@@ -6,7 +6,7 @@ import { GeneralUseStatus } from '../types/status';
 import { isNativeType, NativeTypes } from '../types/nativeTypes';
 import { Types } from 'mongoose';
 
-function getInventory(req: Request, res: Response, next: NextFunction): void {
+function getInventory(req: Request, res: Response, next: NextFunction) {
     const inventoryId = req.headers.inventory;
     if (
         !isNativeType(NativeTypes.STRING, inventoryId)

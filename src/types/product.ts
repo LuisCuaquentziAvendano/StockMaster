@@ -9,6 +9,6 @@ export interface IProduct {
     status: GeneralUseStatus
 }
 
-export type ProductFields = Record<InsensitiveString, Object> & { __brand: "ProductFields" };
+export type ProductFields = Record<InsensitiveString, any> & { __brand: "ProductFields" };
 
 export const FIELDS = 'fields';

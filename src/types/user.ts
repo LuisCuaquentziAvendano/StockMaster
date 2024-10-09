@@ -8,6 +8,7 @@ export interface IUser {
     name: string;
     status: UserStatus;
     token?: string;
+    role?: UserRoles;
 }
 
 export enum UserRoles {
@@ -23,6 +24,8 @@ export const UserRoles2 = Object.freeze([
     UserRoles.QUERY,
     UserRoles.NONE
 ]) as string[];
+
+export const RolesShowAllFields = Object.freeze([UserRoles.ADMIN, UserRoles.STOCK]);
 
 export interface AssignedRole {
     user: Schema.Types.ObjectId;

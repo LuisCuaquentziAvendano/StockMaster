@@ -56,10 +56,20 @@ export class InventoriesValidations {
 
     static insensitiveFields(fields: InventoryFields): FieldsMap {
         const insFields = {} as FieldsMap;
-        Object.keys(fields).forEach(field => {
+        Object.keys(fields).forEach((field: SensitiveString) => {
             const newField = insensitive(field);
-            insFields[newField] = field as SensitiveString;
+            insFields[newField] = field;
         });
         return insFields;
+    }
+
+    static visibleFields(fields: InventoryFields, showAllFields: boolean): InventoryFields {
+        const newFields = {} as InventoryFields;
+        Object.keys(fields).forEach((field: SensitiveString) => {
+            if (showAllFields || fields[field].visible) {
+                newFields[field] = fields[field];
+            }
+        });
+        return newFields;
     }
 }
