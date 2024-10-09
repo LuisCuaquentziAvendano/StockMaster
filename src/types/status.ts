@@ -8,3 +8,8 @@ export enum UserStatus {
     ACTIVE = GeneralUseStatus.ACTIVE,
     DELETED = GeneralUseStatus.DELETED
 }
+
+export enum SaleStatus {
+    CONFIRMED = 'confirmed',
+    REFUNDED = 'refunded'
+}
