@@ -5,13 +5,21 @@ import Product from '../models/product';
 import Sale from '../models/sale';
 import { GeneralUseStatus, SaleStatus } from '../types/status';
 import BigNumber from 'bignumber.js';
+import { isObject } from '../types/nativeTypes';
+import { config } from 'dotenv';
+config();
 
 const Stripe = require('stripe');
-const stripe = Stripe(`${process.env.STRIPE_KEY}`); 
+console.log(process.env.STRIPE_KEY);
+const stripe = Stripe(process.env.STRIPE_KEY); 
 
 class SalesController {
-
     static makePurchase(req: Request, res: Response) {
+        if (!isObject(req.body)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
+            return;
+        }
+        
         const { customer, paymentMethodId, products } = req.body;
         const inventoryId = req.inventory._id;
         const productIds = products.map((p: any) => p.product_id);
@@ -29,11 +37,14 @@ class SalesController {
                 return sum.plus(price.times(amount));
             }, new BigNumber(0));
 
-
             return stripe.paymentIntents.create({
                 amount: totalAmount.multipliedBy(100).toFixed(0),
                 currency: 'usd',
                 payment_method: paymentMethodId,
+                automatic_payment_methods: {
+                    enabled: true,
+                    allow_redirects: 'never', // no redirects for now
+                },
                 confirm: true
             });
         })
