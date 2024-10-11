@@ -45,6 +45,9 @@ export class ProductsValidations {
                         valid = false;
                     }
                 });
+                if (valid) {
+                    return array;
+                }
             } catch {
                 return undefined;
             }

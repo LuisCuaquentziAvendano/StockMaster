@@ -26,7 +26,6 @@ function getProduct(req: Request, res: Response, next: NextFunction) {
         req.product = product;
         next();
     }).catch((error: Error) => {
-        console.log(error);
         if (error.message != '') {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
         }

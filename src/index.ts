@@ -1,9 +1,9 @@
-import express from 'express';
 import { config } from 'dotenv';
+config();
+import express from 'express';
 import { connect } from 'mongoose';
 import routes from './routes';
-import * as _ from './types/request'
-config();
+import * as _ from './types/request';
 
 const app = express();
 const port = process.env.PORT || 3000;

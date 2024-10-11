@@ -1,17 +1,13 @@
-import { generateKey } from 'crypto';
 import { Request, Response } from 'express';
 import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
 import Product from '../models/product';
 import Sale from '../models/sale';
-import { GeneralUseStatus, SaleStatus } from '../types/status';
+import { SaleStatus } from '../types/status';
 import BigNumber from 'bignumber.js';
 import { isObject } from '../types/nativeTypes';
-import { config } from 'dotenv';
-config();
+import Stripe from 'stripe';
 
-const Stripe = require('stripe');
-console.log(process.env.STRIPE_KEY);
-const stripe = Stripe(process.env.STRIPE_KEY); 
+const stripe = new Stripe(process.env.STRIPE_KEY); 
 
 class SalesController {
     static makePurchase(req: Request, res: Response) {
@@ -68,8 +64,7 @@ class SalesController {
         .then(savedSale => {
             res.status(HTTP_STATUS_CODES.CREATED).send(savedSale);
         })
-        .catch(error => {
-            console.error(error);
+        .catch(() => {
             res.status(HTTP_STATUS_CODES.SERVER_ERROR).send('Purchase failed');
         });
     }
@@ -100,7 +95,7 @@ class SalesController {
                 res.status(HTTP_STATUS_CODES.SUCCESS).send(updatedSale);
             }
         })
-        .catch(error => {
+        .catch(() => {
             res.status(HTTP_STATUS_CODES.SERVER_ERROR).send('Internal Server Error');
         });
     }
@@ -116,7 +111,7 @@ class SalesController {
             }
             res.status(HTTP_STATUS_CODES.SUCCESS).send(sale);
         })
-        .catch(error => {
+        .catch(() => {
             res.status(HTTP_STATUS_CODES.SERVER_ERROR).send('Error fetching the sale');
         });
     }
@@ -132,7 +127,7 @@ class SalesController {
             }
             res.status(HTTP_STATUS_CODES.SUCCESS).send(sales);
         })
-        .catch(error => {
+        .catch(() => {
             res.status(HTTP_STATUS_CODES.SERVER_ERROR).send('Internal Server Error');
         });
     }

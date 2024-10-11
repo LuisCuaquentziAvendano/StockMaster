@@ -7,7 +7,7 @@ export enum Regex {
     USER_PASSWORD = '[a-z0-9!@#\\$%\\^&\\*\\(\\)-_=\\+\\[\\]\\{\\}\\|;:\'",\\.<>\\?\\/\\\\]{8,}',
     INVENTORY_FIELD = '[a-z_][a-z0-9_]*',
     INVENTORY_NAME = '[a-zñáéíóú 0-9_]+',
-    DATETIME = '\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}'
+    DATETIME = '\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\.\\d{3}Z'
 }
 
 export function isType(regex: Regex, s: string): boolean {

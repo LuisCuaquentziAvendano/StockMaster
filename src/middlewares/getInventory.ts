@@ -26,7 +26,6 @@ function getInventory(req: Request, res: Response, next: NextFunction) {
         req.inventory = inventory;
         next();
     }).catch((error: Error) => {
-        console.log(error);
         if (error.message != '') {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
         }

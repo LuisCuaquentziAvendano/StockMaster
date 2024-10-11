@@ -289,8 +289,7 @@ export class InventoriesController {
         ).then((permissions => {
             const data = permissions.map(p => p[0]);
             res.send(data);
-        })).catch((err) => {
-            console.log(err.message);
+        })).catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
         });
     }
@@ -340,7 +339,7 @@ export class InventoriesController {
     }
 
     private static formatProductField(field: string) {
-        return FIELDS + '.' + insensitive(field);
+        return `${FIELDS}.${insensitive(field)}`;
     }
 }
 

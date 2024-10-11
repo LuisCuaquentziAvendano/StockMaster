@@ -160,8 +160,7 @@ class UsersController {
                 });
             });
             res.send(data);
-        }).catch((err) => {
-            console.log(err.message);
+        }).catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
         });
     }
@@ -266,8 +265,7 @@ class UsersController {
             });
         }).then(() => {
             res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
-        }).catch((err) => {
-            console.log(err.message);
+        }).catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
         })
     }

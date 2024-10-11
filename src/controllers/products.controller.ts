@@ -7,7 +7,7 @@ import { GeneralUseStatus } from '../types/status';
 import { InventoriesValidations } from './_inventoriesValidations.controller';
 import { ProductsValidations } from './_productsValidations.contoller';
 import { FieldsMap, insensitive, InsensitiveString } from '../types/insensitive';
-import { InventoryFields } from '../types/inventory';
+import { InventoryDataTypes, InventoryFields } from '../types/inventory';
 import { isNativeType, isObject, NativeTypes } from '../types/nativeTypes';
 import { RolesShowAllFields } from '../types/user';
 
@@ -37,6 +37,7 @@ class ProductsController {
         let page = req.query.page as string;
         let currentPage = 0;
         let totalProducts: number;
+        let lastPage: number;
         if (
             isNativeType(NativeTypes.STRING, page)
             && Number.isInteger(page)
@@ -48,7 +49,14 @@ class ProductsController {
         const inventory = req.inventory;
         const showAllFields = RolesShowAllFields.includes(user.role);
         const fieldsMap = InventoriesValidations.insensitiveFields(inventory.fields);
-        const [validQuery, mongooseQuery] = Parser.evalQuery(query, inventory.fields, fieldsMap);
+        const auxFieldsMap = {} as FieldsMap;
+        Object.keys(fieldsMap).forEach((field: InsensitiveString) => {
+            const senField = fieldsMap[field];
+            if (inventory.fields[senField].type != InventoryDataTypes.IMAGE) {
+                auxFieldsMap[field] = senField;
+            }
+        });
+        const [validQuery, mongooseQuery] = Parser.evalQuery(query, inventory.fields, auxFieldsMap);
         if (!validQuery) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid query' });
             return;
@@ -57,14 +65,15 @@ class ProductsController {
             $and: [
                 { inventory: inventory._id },
                 { status: GeneralUseStatus.ACTIVE },
-                mongooseQuery
+                { $expr: mongooseQuery }
             ]
         };
         Product.countDocuments(filters)
         .then(docs => {
-            const maxPage = Math.ceil(docs / ProductsController.PRODUCTS_PER_PAGE) - 1;
+            const maxPage = Math.max(Math.ceil(docs / ProductsController.PRODUCTS_PER_PAGE) - 1, 0);
             currentPage = Math.min(currentPage, maxPage);
             totalProducts = docs;
+            lastPage = maxPage;
             return Product.find(filters)
                 .skip(currentPage * ProductsController.PRODUCTS_PER_PAGE)
                 .limit(ProductsController.PRODUCTS_PER_PAGE);
@@ -72,7 +81,8 @@ class ProductsController {
             const data: Record<any, any> = {
                 inventory: inventory._id,
                 totalProducts,
-                currentPage
+                currentPage,
+                lastPage
             };
             const newProducts = products.map(product => {
                 const newProduct: Record<any, any> = {
@@ -103,6 +113,7 @@ class ProductsController {
         const valid = ProductsController.setProductFields(product.fields, fields, inventory.fields, insInventory);
         if (!valid) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid product field' });
+            return;
         }
         Product.create(product)
         .then((product: IProduct) => {
@@ -120,6 +131,7 @@ class ProductsController {
         const valid = ProductsController.setProductFields(product.fields, fields, inventory.fields, insInventory);
         if (!valid) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid product field' });
+            return;
         }
         Product.updateOne({
             _id: product._id
