@@ -1,3 +1,4 @@
+import { escape } from 'validator';
 import { FieldsMap, insensitive, InsensitiveString, SensitiveString } from "../types/insensitive";
 import { InventoryDataTypes, InventoryFields, Tokens } from "../types/inventory";
 import { isNativeType, NativeTypes } from "../types/nativeTypes";
@@ -10,7 +11,12 @@ export class ProductsValidations {
             return undefined;
         }
         if (expected == InventoryDataTypes.STRING) {
+            if (value == '') {
+                return null;
+            }
             return value;
+        } else if (insensitive(value) == Tokens.NULL) {
+            return null;
         }
         if (expected == InventoryDataTypes.INTEGER && isType(Regex.INTEGER, value)) {
             return value;
@@ -59,9 +65,20 @@ export class ProductsValidations {
         const newProductFields = {} as Record<SensitiveString, any>;
         Object.keys(productFields).forEach((insField: InsensitiveString) => {
             const senField = map[insField];
-            if (showAllFields || inventoryFields[senField].visible) {
-                newProductFields[senField] = productFields[insField];
+            if (!showAllFields && !inventoryFields[senField].visible) {
+                return;
             }
+            if (productFields[insField] == null) {
+                newProductFields[senField] = null;
+                return;
+            }
+            if (inventoryFields[senField].type == InventoryDataTypes.STRING) {
+                productFields[insField] = escape(productFields[insField]);
+            }
+            if (inventoryFields[senField].type == InventoryDataTypes.ARRAY) {
+                productFields[insField] = productFields[insField].map((s: string) => escape(s));
+            }
+            newProductFields[senField] = productFields[insField];
         });
         return newProductFields;
     }

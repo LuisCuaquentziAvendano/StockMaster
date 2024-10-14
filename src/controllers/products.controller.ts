@@ -5,7 +5,7 @@ import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
 import { Parser } from './_parser.controller';
 import { GeneralUseStatus } from '../types/status';
 import { InventoriesValidations } from './_inventoriesValidations.controller';
-import { ProductsValidations } from './_productsValidations.contoller';
+import { ProductsValidations } from './_productsValidations.controller';
 import { FieldsMap, insensitive, InsensitiveString } from '../types/insensitive';
 import { InventoryDataTypes, InventoryFields } from '../types/inventory';
 import { isNativeType, isObject, NativeTypes } from '../types/nativeTypes';
