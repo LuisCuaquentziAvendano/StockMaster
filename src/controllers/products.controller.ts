@@ -6,13 +6,38 @@ import { Parser } from './_parser.controller';
 import { GeneralUseStatus } from '../types/status';
 import { InventoriesValidations } from './_inventoriesValidations.controller';
 import { ProductsValidations } from './_productsValidations.controller';
-import { FieldsMap, insensitive, InsensitiveString } from '../types/insensitive';
-import { InventoryDataTypes, InventoryFields } from '../types/inventory';
-import { isNativeType, isObject, NativeTypes } from '../types/nativeTypes';
+import { FieldsMap, InsensitiveString } from '../types/insensitive';
+import { InventoryDataTypes } from '../types/inventory';
+import { isNativeType, NativeTypes } from '../types/nativeTypes';
 import { RolesShowAllFields } from '../types/user';
 
 class ProductsController {
     private static readonly PRODUCTS_PER_PAGE = 20;
+
+    static createProduct(req: Request, res: Response) {
+        const fields = req.body;
+        const inventory = req.inventory;
+        const insInventory = InventoriesValidations.insensitiveFields(inventory.fields);
+        const product: IProduct = {
+            inventory: inventory._id,
+            fields: {} as ProductFields,
+            status: GeneralUseStatus.ACTIVE
+        };
+        Object.keys(insInventory).forEach((field: InsensitiveString) => {
+            product.fields[field] = null;
+        });
+        const valid = ProductsValidations.setProductFields(product.fields, fields, inventory.fields, insInventory);
+        if (!valid) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid product field' });
+            return;
+        }
+        Product.create(product)
+        .then((product: IProduct) => {
+            res.status(HTTP_STATUS_CODES.CREATED).send({ product: product._id });
+        }).catch(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+        });
+    }
 
     static getProductById(req: Request, res: Response) {
         const user = req.user;
@@ -98,37 +123,12 @@ class ProductsController {
         });
     }
 
-    static createProduct(req: Request, res: Response) {
-        const fields = req.body;
-        const inventory = req.inventory;
-        const insInventory = InventoriesValidations.insensitiveFields(inventory.fields);
-        const product: IProduct = {
-            inventory: inventory._id,
-            fields: {} as ProductFields,
-            status: GeneralUseStatus.ACTIVE
-        };
-        Object.keys(insInventory).forEach((field: InsensitiveString) => {
-            product.fields[field] = null;
-        });
-        const valid = ProductsController.setProductFields(product.fields, fields, inventory.fields, insInventory);
-        if (!valid) {
-            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid product field' });
-            return;
-        }
-        Product.create(product)
-        .then((product: IProduct) => {
-            res.status(HTTP_STATUS_CODES.CREATED).send({ product: product._id });
-        }).catch(() => {
-            res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
-        });
-    }
-
     static updateProduct(req: Request, res: Response) {
         const fields = req.body;
         const inventory = req.inventory;
         const product = req.product;
         const insInventory = InventoriesValidations.insensitiveFields(inventory.fields);
-        const valid = ProductsController.setProductFields(product.fields, fields, inventory.fields, insInventory);
+        const valid = ProductsValidations.setProductFields(product.fields, fields, inventory.fields, insInventory);
         if (!valid) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid product field' });
             return;
@@ -157,26 +157,6 @@ class ProductsController {
         .catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR); 
         });
-    }
-
-    private static setProductFields(productFields: ProductFields, fields: Record<any, any>, inventoryFields: InventoryFields, insInventory: FieldsMap): boolean {
-        if (!isObject(fields)) {
-            return false;
-        }
-        for (const [key, value] of Object.entries(fields)) {
-            const currentSensitiveField = InventoriesValidations.existingField(key, insInventory);
-            if(!currentSensitiveField) {
-                return false;
-            }
-            const expectedValueType = inventoryFields[currentSensitiveField].type;
-            const validatedValue = ProductsValidations.validProductValue(expectedValueType, value);
-            if(isNativeType(NativeTypes.UNDEFINED, validatedValue)) {
-                return false;
-            }
-            productFields[insensitive(currentSensitiveField)] = validatedValue;
-        }
-        // check images uploaded
-        return true;
     }
 }
 

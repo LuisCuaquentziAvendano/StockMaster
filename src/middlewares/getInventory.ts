@@ -12,7 +12,7 @@ function getInventory(req: Request, res: Response, next: NextFunction) {
         !isNativeType(NativeTypes.STRING, inventoryId)
         || !Types.ObjectId.isValid(inventoryId as string)
     ) {
-        res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid inventory ID' });
+        res.status(HTTP_STATUS_CODES.NOT_FOUND).send({ error: 'Inventory not found' });
         return;
     }
     Inventory.findOne({

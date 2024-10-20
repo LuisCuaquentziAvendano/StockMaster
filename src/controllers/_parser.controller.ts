@@ -1,7 +1,7 @@
 import { Operators, Operators2 } from '../types/queryOperators';
 import { Tokens, InventoryFields, inventoryTypeToToken } from '../types/inventory';
 import { Regex, isType, scapeRegexChars } from '../types/regex';
-import { isObject } from '../types/nativeTypes';
+import { isNativeType, NativeTypes } from '../types/nativeTypes';
 import { FIELDS } from '../types/product';
 import { FieldsMap, insensitive, InsensitiveString } from '../types/insensitive';
 
@@ -122,7 +122,7 @@ export class Parser {
         }
         validQuery = Parser.solve(validQuery, tokens, opers, query);
         const finalQuery = validQuery && query.length == 1
-            && isObject(query[0]) ? query[0] : {};
+            && isNativeType(NativeTypes.OBJECT, query[0]) ? query[0] : {};
         return [validQuery, finalQuery];
     }
 

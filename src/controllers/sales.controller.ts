@@ -4,14 +4,14 @@ import Product from '../models/product';
 import Sale from '../models/sale';
 import { SaleStatus } from '../types/status';
 import BigNumber from 'bignumber.js';
-import { isObject } from '../types/nativeTypes';
+import { isNativeType, NativeTypes } from '../types/nativeTypes';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_KEY); 
 
 class SalesController {
     static makePurchase(req: Request, res: Response) {
-        if (!isObject(req.body)) {
+        if (!isNativeType(NativeTypes.OBJECT, req.body)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
             return;
         }

@@ -1,19 +1,23 @@
 export enum NativeTypes {
     STRING = 'string',
     BOOLEAN = 'boolean',
+    UNDEFINED = 'undefined',
     ARRAY = 'array',
-    UNDEFINED = 'undefined'
+    OBJECT = 'object'
 }
 
 export function isNativeType(dataType: NativeTypes, value: any) {
-    if (dataType == NativeTypes.ARRAY)
+    if (dataType == NativeTypes.ARRAY) {
         return Array.isArray(value);
+    }
+    if (dataType == NativeTypes.OBJECT) {
+        return isObject(value);
+    }
     return typeof value == dataType;
 }
 
-export function isObject(value: any) {
-    return value != null
-        && typeof value == 'object'
-        && !Object.getOwnPropertyNames(value).includes('0')
-        && Object.keys(value).length > 0;
+function isObject(value: any) {
+    return typeof value == NativeTypes.OBJECT
+        && value != null
+        && !Array.isArray(value);
 }

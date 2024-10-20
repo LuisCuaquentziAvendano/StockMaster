@@ -4,8 +4,28 @@ import { InventoryDataTypes, InventoryFields, Tokens } from "../types/inventory"
 import { isNativeType, NativeTypes } from "../types/nativeTypes";
 import { ProductFields } from "../types/product";
 import { isType, Regex } from "../types/regex";
+import { InventoriesValidations } from './_inventoriesValidations.controller';
 
 export class ProductsValidations {
+    static setProductFields(productFields: ProductFields, fields: Record<any, any>, inventoryFields: InventoryFields, insInventory: FieldsMap): boolean {
+        if (!isNativeType(NativeTypes.OBJECT, fields)) {
+            return false;
+        }
+        for (const [key, value] of Object.entries(fields)) {
+            const currentSensitiveField = InventoriesValidations.existingField(key, insInventory);
+            if(!currentSensitiveField) {
+                return false;
+            }
+            const expectedValueType = inventoryFields[currentSensitiveField].type;
+            const validatedValue = ProductsValidations.validProductValue(expectedValueType, value);
+            if(isNativeType(NativeTypes.UNDEFINED, validatedValue)) {
+                return false;
+            }
+            productFields[insensitive(currentSensitiveField)] = validatedValue;
+        }
+        return true;
+    }
+
     static validProductValue (expected: InventoryDataTypes, value: any) {
         if (!isNativeType(NativeTypes.STRING, value)) {
             return undefined;
@@ -39,11 +59,11 @@ export class ProductsValidations {
         if (expected == InventoryDataTypes.ARRAY) {
             try {
                 const array = JSON.parse(value);
-                if (!Array.isArray(array)) {
+                if (!isNativeType(NativeTypes.ARRAY, array)) {
                     return undefined;
                 }
                 let valid = true;
-                array.forEach(item => {
+                array.forEach((item: string) => {
                     if (!valid) {
                         return;
                     }

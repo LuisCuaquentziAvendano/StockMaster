@@ -12,7 +12,7 @@ function getProduct(req: Request, res: Response, next: NextFunction) {
         !isNativeType(NativeTypes.STRING, productId)
         || !Types.ObjectId.isValid(productId as string)
     ) {
-        res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid product ID' });
+        res.status(HTTP_STATUS_CODES.NOT_FOUND).send({ error: 'Product not found' });
         return;
     }
     Product.findOne({

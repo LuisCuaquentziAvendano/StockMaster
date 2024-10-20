@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { startSession, mongo, UpdateWriteOpResult } from 'mongoose';
 import Inventory from '../models/inventory';
 import User from '../models/user';
-import { isObject } from '../types/nativeTypes';
+import { isNativeType, NativeTypes } from '../types/nativeTypes';
 import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
 import { IInventory } from '../types/inventory';
 import { AssignedRole, UserRoles, IUser, RolesShowAllFields } from '../types/user';
@@ -13,21 +13,60 @@ import { InventoriesValidations } from './_inventoriesValidations.controller';
 import { insensitive } from '../types/insensitive';
 
 export class InventoriesController {
-    static getInventory(req: Request, res: Response) {
-        const user = req.user;
-        const inventory = req.inventory;
-        const showAllFields = RolesShowAllFields.includes(user.role);
-        const data: Record<any, any> = {
-            inventory: inventory._id,
-            name: inventory.name,
-            fields: InventoriesValidations.visibleFields(inventory.fields, showAllFields),
-            role: user.role
-        };
-        res.send(data);
-    }
-
+/**
+ * @swagger
+ * /api/inventories/createInventory:
+ *   post:
+ *     tags: ["inventories"]
+ *     parameters:
+ *       - name: authorization
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateInventory'
+ *     responses:
+ *       201:
+ *         description: Inventory created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CreateInventorySuccess'
+ *       400:
+ *         description: Invalid data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid authentication
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     CreateInventory:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *           example: "My first inventory"
+ * 
+ *     CreateInventorySuccess:
+ *       type: object
+ *       properties:
+ *         inventory:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ */
     static createInventory(req: Request, res: Response) {
-        if (!isObject(req.body)) {
+        if (!isNativeType(NativeTypes.OBJECT, req.body)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
             return;
         }
@@ -54,41 +93,236 @@ export class InventoriesController {
         });
     }
 
-    static deleteInventory(req: Request, res: Response) {
+/**
+ * @swagger
+ * /api/inventories/getInventory:
+ *   get:
+ *     tags: ["inventories"]
+ *     description: "No visible fields will be hidden to users with 'query' role."
+ *     parameters:
+ *       - name: authorization
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     responses:
+ *       200:
+ *         description: Inventory retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/InventorySchema'
+ *       401:
+ *         description: Invalid authentication
+ *       404:
+ *         description: Inventory not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotFound'
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     InventorySchema:
+ *       type: object
+ *       properties:
+ *         inventory:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *         name:
+ *           type: string
+ *           example: "My first inventory"
+ *         fields:
+ *           example:
+ *             name:
+ *               type: "string"
+ *               visible: true
+ *             price:
+ *               type: "float"
+ *               visible: true
+ *             stock:
+ *               type: "integer"
+ *               visible: false
+ *         role:
+ *           type: string
+ *           enum:
+ *             - admin
+ *             - stock
+ *             - query
+ *           example: "admin"
+ */
+    static getInventory(req: Request, res: Response) {
+        const user = req.user;
         const inventory = req.inventory;
-        let session: mongo.ClientSession;
-        startSession().then(_s => {
-            session = _s;
-            session.startTransaction();
-            return Promise.all([
-                Inventory.updateOne({
-                    _id: inventory._id
-                }, {
-                    status: GeneralUseStatus.DELETED
-                }),
-                Product.updateMany({
-                    inventory: inventory._id
-                }, {
-                    status: GeneralUseStatus.DELETED
-                })
-            ]);
-        }).then(() => {
-            return session.commitTransaction();
-        }).then(() => {
-            res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
-            session.endSession();
-        }).catch(() => {
+        const showAllFields = RolesShowAllFields.includes(user.role);
+        const data: Record<any, any> = {
+            inventory: inventory._id,
+            name: inventory.name,
+            fields: InventoriesValidations.visibleFields(inventory.fields, showAllFields),
+            role: user.role
+        };
+        res.send(data);
+    }
+
+/**
+ * @swagger
+ * /api/inventories/getPermissions:
+ *   get:
+ *     tags: ["inventories"]
+ *     description: "Only 'admin' user can access to this endpoint."
+ *     parameters:
+ *       - name: authorization
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     responses:
+ *       200:
+ *         description: Permissions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/InventoryPermissions'
+ *       401:
+ *         description: Invalid authentication
+ *       404:
+ *         description: Inventory not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotFound'
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     InventoryPermissions:
+ *       type: array
+ *       items:
+ *         type: object
+ *         properties:
+ *           name:
+ *             type: string
+ *             example: "John Doe"
+ *           email:
+ *             type: string
+ *             format: email
+ *             example: "john.doe@gmail.com"
+ *           role:
+ *             type: string
+ *             enum:
+ *               - admin
+ *               - stock
+ *               - query
+ *             example: "query"
+ */
+    static getPermissions(req: Request, res: Response) {
+        const inventory = req.inventory;
+        Promise.all(
+            inventory.roles.map(assignedRole => {
+                return User.aggregate([
+                    { $match: { _id: assignedRole.user } },
+                    { $project: { _id: 0, name: 1, email: 1 } },
+                    { $addFields: { role: assignedRole.role } }
+                ]);
+            })
+        ).then((permissions => {
+            const data = permissions.map(p => p[0]);
+            res.send(data);
+        })).catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
-            if (session) {
-                session.abortTransaction()
-                .then(() => session.endSession());
-            }
         });
     }
 
+/**
+ * @swagger
+ * /api/inventories/createField:
+ *   put:
+ *     tags: ["inventories"]
+ *     description: "Only 'admin' user can access to this endpoint."
+ *     parameters:
+ *       - name: authorization
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateField'
+ *     responses:
+ *       200:
+ *         description: Field created successfully
+ *       400:
+ *         description: Invalid data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid authentication
+ *       404:
+ *         description: Inventory not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotFound'
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     CreateField:
+ *       type: array
+ *       items:
+ *         type: object
+ *         properties:
+ *           field:
+ *             type: string
+ *             example: "stock"
+ *           type:
+ *             type: string
+ *             enum:
+ *               - integer
+ *               - float
+ *               - string
+ *               - boolean
+ *               - array
+ *               - datetime
+ *               - image
+ *             example: "integer"
+ *           visible:
+ *             type: boolean
+ *             example: false
+ */
     static createField(req: Request, res: Response) {
         const fieldsToSet = req.body;
-        if (!Array.isArray(fieldsToSet)) {
+        if (!isNativeType(NativeTypes.ARRAY, fieldsToSet)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an array' });
             return;
         }
@@ -96,8 +330,8 @@ export class InventoriesController {
         const inventory = req.inventory;
         const setNulls: Record<string, null> = {};
         const fieldsMap = InventoriesValidations.insensitiveFields(inventory.fields);
-        fieldsToSet.forEach(objectData => {
-            if (!validFields || !isObject(objectData)) {
+        fieldsToSet.forEach((objectData: Record<string, any>) => {
+            if (!validFields || !isNativeType(NativeTypes.OBJECT, objectData)) {
                 validFields = false;
                 return;
             }
@@ -153,8 +387,68 @@ export class InventoriesController {
         });
     }
 
+/**
+ * @swagger
+ * /api/inventories/updateField:
+ *   put:
+ *     tags: ["inventories"]
+ *     description: "Only 'admin' user can access to this endpoint. They can be updated the field name, the visibility or both in one request."
+ *     parameters:
+ *       - name: authorization
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateField'
+ *     responses:
+ *       200:
+ *         description: Field updated successfully
+ *       400:
+ *         description: Invalid data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid authentication
+ *       404:
+ *         description: Inventory not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotFound'
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     UpdateField:
+ *       type: object
+ *       properties:
+ *         field:
+ *           type: string
+ *           example: "stock"
+ *         newName:
+ *           type: string
+ *           example: "units"
+ *         visible:
+ *           type: boolean
+ *           example: true
+ */
     static updateField(req: Request, res: Response) {
-        if (!isObject(req.body)) {
+        if (!isNativeType(NativeTypes.OBJECT, req.body)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
             return;
         }
@@ -232,8 +526,62 @@ export class InventoriesController {
         });
     }
 
+/**
+ * @swagger
+ * /api/inventories/deleteField:
+ *   put:
+ *     tags: ["inventories"]
+ *     description: "Only 'admin' user can access to this endpoint."
+ *     parameters:
+ *       - name: authorization
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/DeleteField'
+ *     responses:
+ *       200:
+ *         description: Field deleted successfully
+ *       400:
+ *         description: Invalid data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid authentication
+ *       404:
+ *         description: Inventory not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotFound'
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     DeleteField:
+ *       type: object
+ *       properties:
+ *         field:
+ *           type: string
+ *           example: "stock"
+ */
     static deleteField(req: Request, res: Response) {
-        if (!isObject(req.body)) {
+        if (!isNativeType(NativeTypes.OBJECT, req.body)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
             return;
         }
@@ -276,26 +624,70 @@ export class InventoriesController {
         });
     }
 
-    static getPermissions(req: Request, res: Response) {
-        const inventory = req.inventory;
-        Promise.all(
-            inventory.roles.map(assignedRole => {
-                return User.aggregate([
-                    { $match: { _id: assignedRole.user } },
-                    { $project: { _id: 0, name: 1, email: 1 } },
-                    { $addFields: { role: assignedRole.role } }
-                ]);
-            })
-        ).then((permissions => {
-            const data = permissions.map(p => p[0]);
-            res.send(data);
-        })).catch(() => {
-            res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
-        });
-    }
-
-    static modifyPermissions(req: Request, res: Response) {
-        if (!isObject(req.body)) {
+/**
+ * @swagger
+ * /api/inventories/modifyPermission:
+ *   put:
+ *     tags: ["inventories"]
+ *     description: "Only 'admin' user can access to this endpoint."
+ *     parameters:
+ *       - name: authorization
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ModifyPermission'
+ *     responses:
+ *       200:
+ *         description: Permission updated successfully
+ *       400:
+ *         description: Invalid data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid authentication
+ *       404:
+ *         description: Inventory not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotFound'
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     ModifyPermission:
+ *       type: object
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: "john.doe@gmail.com"
+ *         role:
+ *           type: string
+ *           enum:
+ *             - stock
+ *             - query
+ *             - none
+ *           example: "query"
+ */
+    static modifyPermission(req: Request, res: Response) {
+        if (!isNativeType(NativeTypes.OBJECT, req.body)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
             return;
         }
@@ -334,6 +726,71 @@ export class InventoriesController {
         }).catch((error: Error) => {
             if (error.message != '') {
                 res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+            }
+        });
+    }
+
+/**
+ * @swagger
+ * /api/inventories/deleteInventory:
+ *   delete:
+ *     tags: ["inventories"]
+ *     description: "Only 'admin' user can access to this endpoint."
+ *     parameters:
+ *       - name: authorization
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     responses:
+ *       200:
+ *         description: Inventory deleted successfully
+ *       401:
+ *         description: Invalid authentication
+ *       404:
+ *         description: Inventory not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotFound'
+ *       500:
+ *         description: Server error
+ */
+    static deleteInventory(req: Request, res: Response) {
+        const inventory = req.inventory;
+        let session: mongo.ClientSession;
+        startSession().then(_s => {
+            session = _s;
+            session.startTransaction();
+            return Promise.all([
+                Inventory.updateOne({
+                    _id: inventory._id
+                }, {
+                    status: GeneralUseStatus.DELETED
+                }),
+                Product.updateMany({
+                    inventory: inventory._id
+                }, {
+                    status: GeneralUseStatus.DELETED
+                })
+            ]);
+        }).then(() => {
+            return session.commitTransaction();
+        }).then(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
+            session.endSession();
+        }).catch(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+            if (session) {
+                session.abortTransaction()
+                .then(() => session.endSession());
             }
         });
     }
