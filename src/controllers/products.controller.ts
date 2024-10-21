@@ -1,17 +1,16 @@
 import { Request, Response } from 'express';
-import Product from '../models/product';
-import { IProduct, ProductFields } from '../types/product';
-import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
-import { Parser } from './_parser.controller';
-import { GeneralUseStatus } from '../types/status';
-import { InventoriesValidations } from './_inventoriesValidations.controller';
-import { ProductsValidations } from './_productsValidations.controller';
-import { FieldsMap, InsensitiveString } from '../types/insensitive';
-import { InventoryDataTypes } from '../types/inventory';
-import { isNativeType, NativeTypes } from '../types/nativeTypes';
-import { RolesShowAllFields } from '../types/user';
+import { Product } from '../models';
+import { IProduct, ProductFields, FieldsMap, InsensitiveString } from '../types';
+import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
+import { Parser } from './_parser';
+import { GeneralUseStatus } from '../utils/status';
+import { InventoriesValidations } from './_inventoriesUtils';
+import { ProductsValidations } from './_productsUtils';
+import { InventoryDataTypes } from '../utils/inventoryDataTypes';
+import { isNativeType, NativeTypes } from '../utils/nativeTypes';
+import { RolesShowAllFields } from '../utils/roles';
 
-class ProductsController {
+export class ProductsController {
     private static readonly PRODUCTS_PER_PAGE = 20;
 
     static createProduct(req: Request, res: Response) {
@@ -159,5 +158,3 @@ class ProductsController {
         });
     }
 }
-
-export default ProductsController;

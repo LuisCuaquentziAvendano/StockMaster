@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
-import { GeneralUseStatus } from '../types/status';
-import { isNativeType, NativeTypes } from '../types/nativeTypes';
 import { Types } from 'mongoose';
-import Product from '../models/product';
-import { IProduct } from '../types/product';
+import { Product } from '../models';
+import { IProduct } from '../types';
+import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
+import { GeneralUseStatus } from '../utils/status';
+import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 
-function getProduct(req: Request, res: Response, next: NextFunction) {
+export function getProduct(req: Request, res: Response, next: NextFunction) {
     const productId = req.headers.product;
     if (
         !isNativeType(NativeTypes.STRING, productId)
@@ -31,5 +31,3 @@ function getProduct(req: Request, res: Response, next: NextFunction) {
         }
     });
 }
-
-export default getProduct;

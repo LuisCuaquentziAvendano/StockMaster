@@ -1,35 +1,35 @@
 import { Router } from 'express';
 import multer from 'multer';
-import ProductsController from '../controllers/products.controller';
-import middlewares from '../middlewares';
-import { UserRoles } from '../types/user';
+import { ProductsController } from '../controllers';
+import { getProduct, validateRole } from '../middlewares';
+import { UserRoles } from '../utils/roles';
 
 const router = Router();
 const upload = multer();
 
 router.post('/createProduct',
-    middlewares.validateRole([UserRoles.ADMIN, UserRoles.STOCK]),
+    validateRole([UserRoles.ADMIN, UserRoles.STOCK]),
     upload.none(),
     ProductsController.createProduct);
 
 router.get('/getProductById',
-    middlewares.validateRole([UserRoles.ADMIN, UserRoles.STOCK, UserRoles.QUERY]),
-    middlewares.getProduct,
+    validateRole([UserRoles.ADMIN, UserRoles.STOCK, UserRoles.QUERY]),
+    getProduct,
     ProductsController.getProductById);
 
 router.get('/getProductsByQuery',
-    middlewares.validateRole([UserRoles.ADMIN, UserRoles.STOCK, UserRoles.QUERY]),
+    validateRole([UserRoles.ADMIN, UserRoles.STOCK, UserRoles.QUERY]),
     ProductsController.getProductsByQuery);
 
 router.put('/updateProduct',
-    middlewares.validateRole([UserRoles.ADMIN, UserRoles.STOCK]),
-    middlewares.getProduct,
+    validateRole([UserRoles.ADMIN, UserRoles.STOCK]),
+    getProduct,
     upload.none(),
     ProductsController.updateProduct);
 
 router.delete('/deleteProduct',
-    middlewares.validateRole([UserRoles.ADMIN, UserRoles.STOCK]),
-    middlewares.getProduct,
+    validateRole([UserRoles.ADMIN, UserRoles.STOCK]),
+    getProduct,
     ProductsController.deleteProduct);
 
 export default router;

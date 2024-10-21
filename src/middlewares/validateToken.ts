@@ -1,14 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '../models/user';
-import { IUser } from '../types/user';
-import { LoginJwtPayload } from '../types/loginJwtPayload';
-import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
-import { UserStatus } from '../types/status';
-import { isNativeType, NativeTypes } from '../types/nativeTypes';
-import { JWT_KEY } from '../types/envVariables';
+import { User } from '../models';
+import { IUser, LoginJwtPayload } from '../types';
+import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
+import { UserStatus } from '../utils/status';
+import { isNativeType, NativeTypes } from '../utils/nativeTypes';
+import { JWT_KEY } from '../utils/envVariables';
 
-function validateToken(req: Request, res: Response, next: NextFunction) {
+export function validateToken(req: Request, res: Response, next: NextFunction) {
     const token = req.headers.authorization;
     let payload: LoginJwtPayload;
     if (!isNativeType(NativeTypes.STRING, token)) {
@@ -39,5 +38,3 @@ function validateToken(req: Request, res: Response, next: NextFunction) {
         res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
     }
 }
-
-export default validateToken;

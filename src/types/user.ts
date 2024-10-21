@@ -1,4 +1,5 @@
-import { UserStatus } from "./status";
+import { UserRoles } from '../utils/roles';
+import { UserStatus } from '../utils/status';
 import { Schema } from 'mongoose';
 
 export interface IUser {
@@ -10,22 +11,6 @@ export interface IUser {
     token?: string;
     role?: UserRoles;
 }
-
-export enum UserRoles {
-    ADMIN = 'admin',
-    STOCK = 'stock',
-    QUERY = 'query',
-    NONE = 'none'
-}
-
-export const UserRoles2 = Object.freeze([
-    UserRoles.ADMIN,
-    UserRoles.STOCK,
-    UserRoles.QUERY,
-    UserRoles.NONE
-]) as string[];
-
-export const RolesShowAllFields = Object.freeze([UserRoles.ADMIN, UserRoles.STOCK]);
 
 export interface AssignedRole {
     user: Schema.Types.ObjectId;

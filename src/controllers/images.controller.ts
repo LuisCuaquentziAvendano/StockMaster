@@ -1,13 +1,12 @@
-import { NextFunction, Request, Response } from "express";
-import { isNativeType, NativeTypes } from "../types/nativeTypes";
-import { HTTP_STATUS_CODES } from "../types/httpStatusCodes";
-import { GetObjectCommand, GetObjectCommandOutput } from "@aws-sdk/client-s3";
-import { s3 } from "./_s3Connection";
-import { Readable } from "stream";
-import { S3_BUCKET } from "../types/envVariables";
-import middlewares from "../middlewares";
+import { Request, Response } from 'express';
+import { GetObjectCommand, GetObjectCommandOutput } from '@aws-sdk/client-s3';
+import { Readable } from 'stream';
+import { s3 } from './_s3Connection';
+import { isNativeType, NativeTypes } from '../utils/nativeTypes';
+import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
+import { S3_BUCKET } from '../utils/envVariables';
 
-class FilesController {
+export class ImagesController {
     static getImage(req: Request, res: Response) {
         const imageName = req.params.image as string;
         if (!isNativeType(NativeTypes.STRING, imageName)) {
@@ -28,14 +27,4 @@ class FilesController {
             res.sendStatus(HTTP_STATUS_CODES.NOT_FOUND);
         });
     }
-
-    static uploadImage(req: Request, res: Response, next: NextFunction) {
-        req.index = 0;
-        middlewares.uploadFile.fields([{ name: 'image', maxCount: 1 }])(req, res, ()=>{
-            res.send({ variables: req.body, files: req.files ? req.files : 1 });
-            return;
-        });
-    }
 }
-
-export default FilesController

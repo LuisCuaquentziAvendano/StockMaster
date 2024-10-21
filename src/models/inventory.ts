@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { IInventory } from '../types/inventory';
+import { IInventory } from '../types';
 
 const inventorySchema = new Schema<IInventory>({
     name: {
@@ -33,5 +33,4 @@ const inventorySchema = new Schema<IInventory>({
     }
 });
 
-const Inventory = model<IInventory>('inventory', inventorySchema);
-export default Inventory;
+export const Inventory = model<IInventory>('inventory', inventorySchema);

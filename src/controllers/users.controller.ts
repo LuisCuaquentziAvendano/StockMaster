@@ -1,21 +1,17 @@
 import { Request, Response } from 'express';
-import { startSession, mongo } from 'mongoose';
+import { startSession, mongo, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import User from '../models/user';
-import { IUser, UserRoles } from '../types/user';
-import { GeneralUseStatus, UserStatus } from '../types/status';
-import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
-import { LoginJwtPayload } from '../types/loginJwtPayload';
-import Inventory from '../models/inventory';
-import { IInventory } from '../types/inventory';
-import { Schema } from 'mongoose';
-import Product from '../models/product';
-import { UsersValidations } from './_usersValidations.controller';
-import { isNativeType, NativeTypes } from '../types/nativeTypes';
-import { JWT_KEY } from '../types/envVariables';
+import { User, Inventory, Product } from '../models';
+import { IUser, IInventory, LoginJwtPayload } from '../types';
+import { UserRoles } from '../utils/roles';
+import { GeneralUseStatus, UserStatus } from '../utils/status';
+import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
+import { UsersValidations } from './_usersUtils';
+import { isNativeType, NativeTypes } from '../utils/nativeTypes';
+import { JWT_KEY } from '../utils/envVariables';
 
-class UsersController {
+export class UsersController {
     private static readonly ENCRYPTION_ROUNDS = 10;
 
 /**
@@ -573,5 +569,3 @@ class UsersController {
         return token;
     }
 }
-
-export default UsersController;

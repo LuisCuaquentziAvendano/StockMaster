@@ -1,6 +1,6 @@
-import { isNativeType, NativeTypes } from "../types/nativeTypes";
-import { isType, Regex } from "../types/regex";
-import { isEmail } from "validator";
+import { isEmail } from 'validator';
+import { isNativeType, NativeTypes } from '../utils/nativeTypes';
+import { isType, Regex } from '../utils/regex';
 
 export class UsersValidations {
     static _name(name: any): boolean {

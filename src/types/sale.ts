@@ -1,5 +1,5 @@
 import { Schema } from 'mongoose';
-import { SaleStatus } from './status'; 
+import { SaleStatus } from '../utils/status'; 
 
 export interface IPurchasedProduct{
     product_id: Schema.Types.ObjectId;

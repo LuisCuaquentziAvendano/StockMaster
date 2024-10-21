@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { IProduct } from '../types/product';
+import { IProduct } from '../types';
 
 const productSchema = new Schema<IProduct>({
     inventory: {
@@ -17,5 +17,4 @@ const productSchema = new Schema<IProduct>({
     }
 });
 
-const Product = model<IProduct>('product', productSchema);
-export default Product;
+export const Product = model<IProduct>('product', productSchema);

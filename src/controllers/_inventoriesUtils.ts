@@ -1,11 +1,10 @@
-import { InventoryFields, InventoryDataTypes, InventoryDataTypes2, Tokens2 } from "../types/inventory";
-import { isNativeType, NativeTypes } from "../types/nativeTypes";
-import { isType, Regex } from "../types/regex";
-import { Operators2 } from "../types/queryOperators";
-import { IUser, UserRoles, UserRoles2 } from "../types/user";
-import { UsersValidations } from "./_usersValidations.controller";
-import { insensitive, SensitiveString } from "../types/insensitive";
-import { FieldsMap } from "../types/insensitive";
+import { UsersValidations } from './_usersUtils';
+import { IUser, InventoryFields, FieldsMap, insensitive, SensitiveString } from '../types';
+import { InventoryDataTypes, InventoryDataTypes2, Tokens2 } from '../utils/inventoryDataTypes';
+import { isNativeType, NativeTypes } from '../utils/nativeTypes';
+import { isType, Regex } from '../utils/regex';
+import { Operators2 } from '../utils/queryOperators';
+import { UserRoles, UserRoles2 } from '../utils/roles';
 
 export class InventoriesValidations {
     static _name(name: string): boolean {

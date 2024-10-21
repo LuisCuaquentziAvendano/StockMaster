@@ -1,9 +1,8 @@
-import { Operators, Operators2 } from '../types/queryOperators';
-import { Tokens, InventoryFields, inventoryTypeToToken } from '../types/inventory';
-import { Regex, isType, scapeRegexChars } from '../types/regex';
-import { isNativeType, NativeTypes } from '../types/nativeTypes';
-import { FIELDS } from '../types/product';
-import { FieldsMap, insensitive, InsensitiveString } from '../types/insensitive';
+import { Operators, Operators2 } from '../utils/queryOperators';
+import { InventoryFields, FIELDS, FieldsMap, insensitive, InsensitiveString } from '../types';
+import { Tokens, inventoryTypeToToken } from '../utils/inventoryDataTypes';
+import { Regex, isType, scapeRegexChars } from '../utils/regex';
+import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 
 const MONGO_OPERS: Record<string, (a: any, b?: any) => any> = Object.freeze({
     [Operators.SUM]: (a: any, b: any) => ({ $add: [a, b] }),
@@ -17,7 +16,7 @@ const MONGO_OPERS: Record<string, (a: any, b?: any) => any> = Object.freeze({
     [Operators.GREATER_THAN]: (a: any, b: any) => ({ $gt: [a, b] }),
     [Operators.LESS_THAN_EQUAL]: (a: any, b: any) => ({ $lte: [a, b] }),
     [Operators.GREATER_THAN_EQUAL]: (a: any, b: any) => ({ $gte: [a, b] }),
-    [Operators.LIKE]: (a: any, b: any) => ({ "$regexMatch": { "input": a, "regex": b, "options": "i" } }),
+    [Operators.LIKE]: (a: any, b: any) => ({ '$regexMatch': { 'input': a, 'regex': b, 'options': 'i' } }),
     [Operators.INCLUDES]: (a: any, b: any) => ({ $in: [b, a] }),
     [Operators.NOT]: (a: any, b: any) => ({ $not: a }),
     [Operators.AND]: (a: any, b: any) => ({ $and: [a, b] }),
@@ -38,7 +37,7 @@ function formatField(field: string) {
 }
 
 function formatField2(field: string) {
-    return { "$getField": { "field": field, "input": `$${FIELDS}` } };
+    return { '$getField': { 'field': field, 'input': `$${FIELDS}` } };
 }
 
 export class Parser {

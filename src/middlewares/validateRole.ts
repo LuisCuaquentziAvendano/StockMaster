@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserRoles } from '../types/user';
-import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
+import { UserRoles } from '../utils/roles';
+import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
 
 type RoleFunction = (req: Request, res: Response, next: NextFunction) => void;
-function validateRole(roles: UserRoles[]): RoleFunction {
+
+export function validateRole(roles: UserRoles[]): RoleFunction {
     return function (req: Request, res: Response, next: NextFunction): void {
         const user = req.user;
         const inventory = req.inventory;
@@ -19,5 +20,3 @@ function validateRole(roles: UserRoles[]): RoleFunction {
         next();
     };
 }
-
-export default validateRole;

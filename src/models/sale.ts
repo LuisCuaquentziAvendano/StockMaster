@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { ISale } from '../types/sale'; 
+import { ISale } from '../types'; 
 
 const purchasedProductSchema = new Schema({
     product_id: {
@@ -45,6 +45,4 @@ const saleSchema = new Schema<ISale>({
     }
 });
 
-const Sale = model<ISale>('Sale', saleSchema);
-
-export default Sale;
+export const Sale = model<ISale>('Sale', saleSchema);

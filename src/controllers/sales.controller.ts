@@ -1,16 +1,15 @@
 import { Request, Response } from 'express';
-import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
-import Product from '../models/product';
-import Sale from '../models/sale';
-import { SaleStatus } from '../types/status';
-import BigNumber from 'bignumber.js';
-import { isNativeType, NativeTypes } from '../types/nativeTypes';
 import Stripe from 'stripe';
-import { STRIPE_KEY } from '../types/envVariables';
+import BigNumber from 'bignumber.js';
+import { Product, Sale } from '../models';
+import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
+import { SaleStatus } from '../utils/status';
+import { isNativeType, NativeTypes } from '../utils/nativeTypes';
+import { STRIPE_KEY } from '../utils/envVariables';
 
 const stripe = new Stripe(STRIPE_KEY); 
 
-class SalesController {
+export class SalesController {
     static makePurchase(req: Request, res: Response) {
         if (!isNativeType(NativeTypes.OBJECT, req.body)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
@@ -24,7 +23,7 @@ class SalesController {
         Product.find({ _id: { $in: productIds }, inventory: inventoryId })
         .then(dbProducts => {
             if (dbProducts.length !== products.length) {
-                res.status(HTTP_STATUS_CODES.BAD_REQUEST).send("Invalid products.");
+                res.status(HTTP_STATUS_CODES.BAD_REQUEST).send('Invalid products.');
                 return;
             }
 
@@ -69,7 +68,6 @@ class SalesController {
             res.status(HTTP_STATUS_CODES.SERVER_ERROR).send('Purchase failed');
         });
     }
-
       
     static refundPurchase(req: Request, res: Response) {
         const { saleId } = req.body;
@@ -133,5 +131,3 @@ class SalesController {
         });
     }
 }
-
-export default SalesController;

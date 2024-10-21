@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import UsersController from '../controllers/users.controller';
-import middlewares from '../middlewares';
+import { UsersController } from '../controllers';
+import { validateToken } from '../middlewares';
 
 const router = Router();
 
@@ -9,29 +9,29 @@ router.post('/register', UsersController.register);
 router.post('/login', UsersController.login);
 
 router.get('/getData',
-    middlewares.validateToken,
+    validateToken,
     UsersController.getData);
 
 router.get('/getInventories',
-    middlewares.validateToken,
+    validateToken,
     UsersController.getInventories);
 
 router.put('/verifyEmail/:token', UsersController.verifyEmail);
 
 router.put('/generateNewToken',
-    middlewares.validateToken,
+    validateToken,
     UsersController.generateNewToken);
 
 router.put('/updateData',
-    middlewares.validateToken,
+    validateToken,
     UsersController.updateData);
 
 router.put('/updatePassword',
-    middlewares.validateToken,
+    validateToken,
     UsersController.updatePassword);
     
 router.delete('/deleteUser',
-    middlewares.validateToken,
+    validateToken,
     UsersController.deleteUser);
 
 export default router;

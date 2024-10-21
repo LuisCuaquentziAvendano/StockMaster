@@ -1,10 +1,9 @@
 import { escape } from 'validator';
-import { FieldsMap, insensitive, InsensitiveString, SensitiveString } from "../types/insensitive";
-import { InventoryDataTypes, InventoryFields, Tokens } from "../types/inventory";
-import { isNativeType, NativeTypes } from "../types/nativeTypes";
-import { ProductFields } from "../types/product";
-import { isType, Regex } from "../types/regex";
-import { InventoriesValidations } from './_inventoriesValidations.controller';
+import { InventoriesValidations } from './_inventoriesUtils';
+import { InventoryFields, ProductFields, FieldsMap, insensitive, InsensitiveString, SensitiveString } from '../types';
+import { InventoryDataTypes, Tokens } from '../utils/inventoryDataTypes';
+import { isNativeType, NativeTypes } from '../utils/nativeTypes';
+import { isType, Regex } from '../utils/regex';
 
 export class ProductsValidations {
     static setProductFields(productFields: ProductFields, fields: Record<any, any>, inventoryFields: InventoryFields, insInventory: FieldsMap): boolean {

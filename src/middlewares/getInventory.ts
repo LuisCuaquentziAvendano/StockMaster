@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import Inventory from '../models/inventory';
-import { IInventory } from '../types/inventory';
-import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
-import { GeneralUseStatus } from '../types/status';
-import { isNativeType, NativeTypes } from '../types/nativeTypes';
 import { Types } from 'mongoose';
+import { Inventory } from '../models';
+import { IInventory } from '../types';
+import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
+import { GeneralUseStatus } from '../utils/status';
+import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 
-function getInventory(req: Request, res: Response, next: NextFunction) {
+export function getInventory(req: Request, res: Response, next: NextFunction) {
     const inventoryId = req.headers.inventory;
     if (
         !isNativeType(NativeTypes.STRING, inventoryId)
@@ -31,5 +31,3 @@ function getInventory(req: Request, res: Response, next: NextFunction) {
         }
     });
 }
-
-export default getInventory;

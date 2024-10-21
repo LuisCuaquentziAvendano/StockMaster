@@ -3,7 +3,7 @@ import users from './users.routes';
 import inventories from './inventories.routes';
 import products from './products.routes';
 import sales from './sales.routes';
-import middlewares from '../middlewares';
+import { getInventory, validateToken } from '../middlewares';
 
 const router = Router();
 router.use(json());
@@ -51,17 +51,17 @@ router.get('/', (req: Request, res: Response) => {
 router.use('/users', users);
 
 router.use('/inventories',
-    middlewares.validateToken,
+    validateToken,
     inventories);
 
 router.use('/products',
-    middlewares.validateToken,
-    middlewares.getInventory,
+    validateToken,
+    getInventory,
     products);
 
 router.use('/sales',
-    middlewares.validateToken,
-    middlewares.getInventory,
+    validateToken,
+    getInventory,
     sales);
 
 export default router;

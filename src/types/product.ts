@@ -1,5 +1,5 @@
 import { Schema } from 'mongoose';
-import { GeneralUseStatus } from './status';
+import { GeneralUseStatus } from '../utils/status';
 import { InsensitiveString } from './insensitive';
 
 export interface IProduct {
@@ -9,6 +9,6 @@ export interface IProduct {
     status: GeneralUseStatus
 }
 
-export type ProductFields = Record<InsensitiveString, any> & { __brand: "ProductFields" };
+export type ProductFields = Record<InsensitiveString, any> & { __brand: 'ProductFields' };
 
 export const FIELDS = 'fields';

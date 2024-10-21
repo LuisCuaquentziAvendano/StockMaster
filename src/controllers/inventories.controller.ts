@@ -1,16 +1,12 @@
 import { Request, Response } from 'express';
 import { startSession, mongo, UpdateWriteOpResult } from 'mongoose';
-import Inventory from '../models/inventory';
-import User from '../models/user';
-import { isNativeType, NativeTypes } from '../types/nativeTypes';
-import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
-import { IInventory } from '../types/inventory';
-import { AssignedRole, UserRoles, IUser, RolesShowAllFields } from '../types/user';
-import { GeneralUseStatus, UserStatus } from '../types/status';
-import Product from '../models/product';
-import { FIELDS, IProduct } from '../types/product';
-import { InventoriesValidations } from './_inventoriesValidations.controller';
-import { insensitive } from '../types/insensitive';
+import { User, Inventory, Product } from '../models';
+import { IInventory, FIELDS, IProduct, AssignedRole, IUser, insensitive } from '../types';
+import { InventoriesValidations } from './_inventoriesUtils';
+import { isNativeType, NativeTypes } from '../utils/nativeTypes';
+import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
+import { UserRoles, RolesShowAllFields } from '../utils/roles';
+import { GeneralUseStatus, UserStatus } from '../utils/status';
 
 export class InventoriesController {
 /**
