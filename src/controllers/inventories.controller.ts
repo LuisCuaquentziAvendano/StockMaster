@@ -795,5 +795,3 @@ export class InventoriesController {
         return `${FIELDS}.${insensitive(field)}`;
     }
 }
-
-export default InventoriesValidations;

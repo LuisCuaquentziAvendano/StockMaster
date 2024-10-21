@@ -1,4 +1,4 @@
-const swaggerConfig = (host: string) => {
+export const swaggerConfig = (host: string) => {
     return {
         swaggerDefinition: {
             openapi: "3.1.0",
@@ -14,5 +14,3 @@ const swaggerConfig = (host: string) => {
         apis: ["./src/**/*.ts"]
     }
 }
-
-export default swaggerConfig;
