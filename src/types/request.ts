@@ -8,6 +8,7 @@ declare global {
             user?: IUser;
             inventory?: IInventory;
             product?: IProduct;
+            index?: number;
         }
     }
 }

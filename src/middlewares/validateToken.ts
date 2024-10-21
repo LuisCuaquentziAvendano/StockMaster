@@ -6,17 +6,17 @@ import { LoginJwtPayload } from '../types/loginJwtPayload';
 import { HTTP_STATUS_CODES } from '../types/httpStatusCodes';
 import { UserStatus } from '../types/status';
 import { isNativeType, NativeTypes } from '../types/nativeTypes';
+import { JWT_KEY } from '../types/envVariables';
 
 function validateToken(req: Request, res: Response, next: NextFunction) {
     const token = req.headers.authorization;
-    const secretKey = process.env.JWT_KEY;
     let payload: LoginJwtPayload;
     if (!isNativeType(NativeTypes.STRING, token)) {
         res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
         return;
     }
     try {
-        payload = jwt.verify(token, secretKey) as LoginJwtPayload;
+        payload = jwt.verify(token, JWT_KEY) as LoginJwtPayload;
         User.findOne({
             _id: payload._id,
             status: UserStatus.ACTIVE,

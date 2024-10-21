@@ -6,8 +6,9 @@ import { SaleStatus } from '../types/status';
 import BigNumber from 'bignumber.js';
 import { isNativeType, NativeTypes } from '../types/nativeTypes';
 import Stripe from 'stripe';
+import { STRIPE_KEY } from '../types/envVariables';
 
-const stripe = new Stripe(process.env.STRIPE_KEY); 
+const stripe = new Stripe(STRIPE_KEY); 
 
 class SalesController {
     static makePurchase(req: Request, res: Response) {

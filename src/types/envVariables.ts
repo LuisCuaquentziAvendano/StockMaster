@@ -1,0 +1,9 @@
+export const PORT = process.env.PORT || 3000;
+export const DOMAIN = process.env.DOMAIN || `http://localhost:${PORT}`;
+export const DB_URL = process.env.DB_URL;
+export const JWT_KEY = process.env.JWT_KEY;
+export const STRIPE_KEY = process.env.STRIPE_KEY;
+export const S3_SECRET_KEY = process.env.S3_SECRET_KEY;
+export const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY;
+export const S3_REGION = process.env.S3_REGION;
+export const S3_BUCKET = process.env.S3_BUCKET;

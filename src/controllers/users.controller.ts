@@ -13,6 +13,7 @@ import { Schema } from 'mongoose';
 import Product from '../models/product';
 import { UsersValidations } from './_usersValidations.controller';
 import { isNativeType, NativeTypes } from '../types/nativeTypes';
+import { JWT_KEY } from '../types/envVariables';
 
 class UsersController {
     private static readonly ENCRYPTION_ROUNDS = 10;
@@ -567,9 +568,8 @@ class UsersController {
     }
     
     private static createToken(_id: Schema.Types.ObjectId): string {
-        const secretKey = process.env.JWT_KEY;
         const payload: LoginJwtPayload = { _id, timestamp: Date.now() };
-        const token = jwt.sign(payload, secretKey);
+        const token = jwt.sign(payload, JWT_KEY);
         return token;
     }
 }

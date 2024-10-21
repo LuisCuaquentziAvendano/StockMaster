@@ -6,21 +6,19 @@ import swaggerJSDoc from 'swagger-jsdoc';
 import { serve, setup } from 'swagger-ui-express';
 import swaggerConfig from '../swaggerConfig';
 import routes from './routes';
+import { PORT, DOMAIN, DB_URL } from './types/envVariables';
 import * as _ from './types/request';
 
 const app = express();
-const port = process.env.PORT || 3000;
-const host = process.env.HOST || `http://localhost:${port}`;
-const dbUrl = process.env.DB_URL;
 
-connect(dbUrl)
+connect(DB_URL)
 .then(() => {
     console.log('Connected to database');
     app.use('/api', routes);
-    const swaggerDocs = swaggerJSDoc(swaggerConfig(host));
+    const swaggerDocs = swaggerJSDoc(swaggerConfig(DOMAIN));
     app.use('/api/documentation', serve, setup(swaggerDocs));
-    app.listen(port, () => {
-        console.log(`App is running in port ${port}`);
+    app.listen(PORT, () => {
+        console.log(`App is running in port ${PORT}`);
     });
 }).catch(() => {
     console.log('Ocurrió un error');
