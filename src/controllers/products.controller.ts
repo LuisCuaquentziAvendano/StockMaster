@@ -13,6 +13,66 @@ import { RolesShowAllFields } from '../utils/roles';
 export class ProductsController {
     private static readonly PRODUCTS_PER_PAGE = 20;
 
+/**
+ * @swagger
+ * /api/products/createProduct:
+ *   post:
+ *     tags: ["products"]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateProduct'
+ *     responses:
+ *       201:
+ *         description: Product created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CreateProductSuccess'
+ *       400:
+ *         description: Invalid product data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid authentication
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     CreateProduct:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *           example: "Product A"
+ *         price:
+ *           type: string
+ *           example: "25.50"
+ *         isAvailable:
+ *           type: boolean
+ *           example: true
+ * 
+ *     CreateProductSuccess:
+ *       type: object
+ *       properties:
+ *         product:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ */
     static createProduct(req: Request, res: Response) {
         const fields = req.body;
         const inventory = req.inventory;
@@ -38,6 +98,64 @@ export class ProductsController {
         });
     }
 
+/**
+ * @swagger
+ * /api/products/getProductById:
+ *   get:
+ *     tags: ["products"]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *       - name: product
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "5f4dcc3b5aa765d61d8327deb882cf99"
+ *     responses:
+ *       200:
+ *         description: Product retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/GetProductByIdSuccess'
+ *       400:
+ *         description: Invalid product ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid authentication
+ *       404:
+ *         description: Product not found
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     GetProductByIdSuccess:
+ *       type: object
+ *       properties:
+ *         product:
+ *           type: object
+ *           properties:
+ *             name:
+ *               type: string
+ *               example: "Product A"
+ *             price:
+ *               type: string
+ *               example: "25.50"
+ *             isAvailable:
+ *               type: boolean
+ *               example: true
+ */
     static getProductById(req: Request, res: Response) {
         const user = req.user;
         const inventory = req.inventory;
@@ -56,6 +174,68 @@ export class ProductsController {
         res.send(data);
     }
 
+/**
+ * @swagger
+ * /api/products/getProductsByQuery:
+ *   get:
+ *     tags: ["products"]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - name: query
+ *         in: query
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Products fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/GetProductsQuerySuccess'
+ *       400:
+ *         description: Invalid query
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid authentication
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     GetProductsQuerySuccess:
+ *       type: object
+ *       properties:
+ *         products:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               product:
+ *                 type: string
+ *                 example: "6709865e4441a6a26ba4bf10"
+ *               fields:
+ *                 type: object
+ *                 example: { "price": "25.50", "name": "Product A", "isAvailable": true }
+ *         totalProducts:
+ *           type: integer
+ *           example: 100
+ *         currentPage:
+ *           type: integer
+ *           example: 1
+ *         lastPage:
+ *           type: integer
+ *           example: 5
+ */
     static getProductsByQuery(req: Request, res: Response) {
         const query = (req.query.query || '') as string;
         let page = req.query.page as string;
@@ -122,6 +302,63 @@ export class ProductsController {
         });
     }
 
+/**
+ * @swagger
+ * /api/products/updateProduct:
+ *   put:
+ *     tags: ["products"]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *       - name: product
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "5f4dcc3b5aa765d61d8327deb882cf99"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateProduct'
+ *     responses:
+ *       200:
+ *         description: Product updated successfully
+ *       400:
+ *         description: Invalid product field
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid authentication
+ *       404:
+ *         description: Product not found
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     UpdateProduct:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *           example: "Product A"
+ *         price:
+ *           type: string
+ *           example: "25.50"
+ *         isAvailable:
+ *           type: boolean
+ *           example: true
+ */
     static updateProduct(req: Request, res: Response) {
         const fields = req.body;
         const inventory = req.inventory;
@@ -143,7 +380,52 @@ export class ProductsController {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
         });
     }
-    
+
+/**
+ * @swagger
+ * /api/products/deleteProduct:
+ *   delete:
+ *     tags: ["products"]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *       - name: product
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "5f4dcc3b5aa765d61d8327deb882cf99"
+ *     responses:
+ *       200:
+ *         description: Product deleted successfully
+ *       400:
+ *         description: Invalid product ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid authentication
+ *       404:
+ *         description: Product not found
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     DeleteProductSuccess:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: "Product successfully deleted"
+ */
     static deleteProduct(req: Request, res: Response) {
         const product = req.product;
         Product.updateOne({

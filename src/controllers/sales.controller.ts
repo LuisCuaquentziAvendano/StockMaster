@@ -10,6 +10,77 @@ import { STRIPE_KEY } from '../utils/envVariables';
 const stripe = new Stripe(STRIPE_KEY); 
 
 export class SalesController {
+/**
+ * @swagger
+ * /api/sales/makePurchase:
+ *   post:
+ *     tags: ["sales"]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateSale'
+ *     responses:
+ *       201:
+ *         description: Sale created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CreateSaleSuccess'
+ *       400:
+ *         description: Invalid data or products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     CreateSale:
+ *       type: object
+ *       properties:
+ *         customer:
+ *           type: string
+ *           example: "John Doe"
+ *         paymentMethodId:
+ *           type: string
+ *           example: "pm_1JN2Yp2eZvKYlo2C8L9qzdHk"
+ *         products:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               product_id:
+ *                 type: string
+ *                 example: "6709865e4441a6a26ba4bf10"
+ *               price:
+ *                 type: string
+ *                 example: "19.99"
+ *               amount:
+ *                 type: string
+ *                 example: "3"
+ *     CreateSaleSuccess:
+ *       type: object
+ *       properties:
+ *         saleId:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *         totalAmount:
+ *           type: string
+ *           example: "59.97"
+ */
     static makePurchase(req: Request, res: Response) {
         if (!isNativeType(NativeTypes.OBJECT, req.body)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
@@ -68,7 +139,54 @@ export class SalesController {
             res.status(HTTP_STATUS_CODES.SERVER_ERROR).send('Purchase failed');
         });
     }
-      
+
+/**
+ * @swagger
+ * /api/sales/refundPurchase:
+ *   post:
+ *     tags: ["sales"]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RefundPurchase'
+ *     responses:
+ *       200:
+ *         description: Sale refunded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RefundPurchaseSuccess'
+ *       400:
+ *         description: Sale not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     RefundPurchase:
+ *       type: object
+ *       properties:
+ *         saleId:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     RefundPurchaseSuccess:
+ *       type: object
+ *       properties:
+ *         saleId:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *         status:
+ *           type: string
+ *           example: "refunded"
+ */
     static refundPurchase(req: Request, res: Response) {
         const { saleId } = req.body;
         
@@ -99,6 +217,64 @@ export class SalesController {
         });
     }
 
+/**
+ * @swagger
+ * /api/sales/getPurchaseOrder:
+ *   get:
+ *     tags: ["sales"]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/GetPurchaseOrder'
+ *     responses:
+ *       200:
+ *         description: Purchase order retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/GetPurchaseOrderSuccess'
+ *       400:
+ *         description: Sale not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     GetPurchaseOrder:
+ *       type: object
+ *       properties:
+ *         saleId:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     GetPurchaseOrderSuccess:
+ *       type: object
+ *       properties:
+ *         saleId:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *         totalAmount:
+ *           type: string
+ *           example: "59.97"
+ *         products:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               product_id:
+ *                 type: string
+ *                 example: "6709865e4441a6a26ba4bf10"
+ *               amount:
+ *                 type: string
+ *                 example: "3"
+ */
     static getPurchaseOrder(req: Request, res: Response) {
         const { saleId } = req.body;
 
@@ -115,6 +291,56 @@ export class SalesController {
         });
     }
 
+/**
+ * @swagger
+ * /api/sales/getSalesByInventory:
+ *   get:
+ *     tags: ["sales"]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     responses:
+ *       200:
+ *         description: Sales retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/GetSalesByInventorySuccess'
+ *       404:
+ *         description: No sales found for this inventory
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     GetSalesByInventorySuccess:
+ *       type: object
+ *       properties:
+ *         sales:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               saleId:
+ *                 type: string
+ *                 example: "6709865e4441a6a26ba4bf10"
+ *               totalAmount:
+ *                 type: string
+ *                 example: "59.97"
+ *               status:
+ *                 type: string
+ *                 example: "confirmed"
+ */
     static getSalesByInventory(req: Request, res: Response) {
         const inventoryId = req.inventory._id;
 
