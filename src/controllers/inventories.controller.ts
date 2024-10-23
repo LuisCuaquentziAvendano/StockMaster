@@ -14,13 +14,8 @@ export class InventoriesController {
  * /api/inventories/createInventory:
  *   post:
  *     tags: ["inventories"]
- *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -95,13 +90,9 @@ export class InventoriesController {
  *   get:
  *     tags: ["inventories"]
  *     description: "No visible fields will be hidden to users with 'query' role."
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
  *       - name: inventory
  *         in: header
  *         required: true
@@ -175,13 +166,9 @@ export class InventoriesController {
  *   get:
  *     tags: ["inventories"]
  *     description: "Only 'admin' user can access to this endpoint."
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
  *       - name: inventory
  *         in: header
  *         required: true
@@ -252,13 +239,9 @@ export class InventoriesController {
  *   put:
  *     tags: ["inventories"]
  *     description: "Only 'admin' user can access to this endpoint."
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
  *       - name: inventory
  *         in: header
  *         required: true
@@ -389,13 +372,9 @@ export class InventoriesController {
  *   put:
  *     tags: ["inventories"]
  *     description: "Only 'admin' user can access to this endpoint. They can be updated the field name, the visibility or both in one request."
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
  *       - name: inventory
  *         in: header
  *         required: true
@@ -528,13 +507,9 @@ export class InventoriesController {
  *   put:
  *     tags: ["inventories"]
  *     description: "Only 'admin' user can access to this endpoint."
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
  *       - name: inventory
  *         in: header
  *         required: true
@@ -626,13 +601,9 @@ export class InventoriesController {
  *   put:
  *     tags: ["inventories"]
  *     description: "Only 'admin' user can access to this endpoint."
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
  *       - name: inventory
  *         in: header
  *         required: true
@@ -732,13 +703,9 @@ export class InventoriesController {
  *   delete:
  *     tags: ["inventories"]
  *     description: "Only 'admin' user can access to this endpoint."
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
  *       - name: inventory
  *         in: header
  *         required: true

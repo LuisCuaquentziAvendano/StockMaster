@@ -207,13 +207,8 @@ export class UsersController {
  * /api/users/getData:
  *   get:
  *     tags: ["users"]
- *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Data retrieved successfully
@@ -253,13 +248,8 @@ export class UsersController {
  * /api/users/getInventories:
  *   get:
  *     tags: ["users"]
- *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Inventories retrieved successfully
@@ -325,13 +315,8 @@ export class UsersController {
  * /api/users/generateNewToken:
  *   put:
  *     tags: ["users"]
- *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Token updated successfully
@@ -360,12 +345,8 @@ export class UsersController {
  *   put:
  *     tags: ["users"]
  *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -424,12 +405,8 @@ export class UsersController {
  *     tags: ["users"]
  *     description: "Updating the password also generates a new token."
  *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -492,13 +469,8 @@ export class UsersController {
  * /api/users/deleteUser:
  *   delete:
  *     tags: ["users"]
- *     parameters:
- *       - name: authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzA5Mjk1N2IxMzhiZWJkODhlNmY2YzIiLCJ0aW1lc3RhbXAiOjE3Mjg2NTQyMDEwNjEsImlhdCI6MTcyODY1NDIwMX0.mRF6grWO3WjfLgY_jx2fMu9L_ibevSu8WBMJgykf6TU"
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: User deleted successfully

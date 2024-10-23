@@ -8,12 +8,17 @@ import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 import { JWT_KEY } from '../utils/envVariables';
 
 export function validateToken(req: Request, res: Response, next: NextFunction) {
-    const token = req.headers.authorization;
+    const prefix = 'Bearer ';
+    const authorization = req.headers.authorization;
     let payload: LoginJwtPayload;
-    if (!isNativeType(NativeTypes.STRING, token)) {
+    if (
+        !isNativeType(NativeTypes.STRING, authorization)
+        || !authorization.startsWith(prefix)
+    ) {
         res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
         return;
     }
+    const token = authorization.slice(prefix.length);
     try {
         payload = jwt.verify(token, JWT_KEY) as LoginJwtPayload;
         User.findOne({

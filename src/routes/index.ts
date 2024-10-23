@@ -43,6 +43,12 @@ router.use(json());
  *         error:
  *           type: string
  *           example: "Inventory not found"
+ * 
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
  */
 router.get('/', (req: Request, res: Response) => {
     res.send({ message: 'Stock Master API' });
