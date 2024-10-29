@@ -3,7 +3,9 @@ import users from './users.routes';
 import inventories from './inventories.routes';
 import products from './products.routes';
 import sales from './sales.routes';
-import { getInventory, validateToken } from '../middlewares';
+import images from './images.routes';
+import { getInventory, getProduct, validateRole, validateToken } from '../middlewares';
+import { UserRoles } from '../utils/roles';
 
 const router = Router();
 router.use(json());
@@ -69,5 +71,13 @@ router.use('/sales',
     validateToken,
     getInventory,
     sales);
+
+router.use('/images',
+    validateToken,
+    getInventory,
+    validateRole([UserRoles.ADMIN, UserRoles.STOCK, UserRoles.QUERY]),
+    getProduct,
+    images
+);
 
 export default router;

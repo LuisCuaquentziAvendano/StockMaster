@@ -6,26 +6,26 @@ import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 import { isType, Regex } from '../utils/regex';
 
 export class ProductsValidations {
-    static setProductFields(productFields: ProductFields, fields: Record<any, any>, inventoryFields: InventoryFields, insInventory: FieldsMap): boolean {
+    static setProductFields(productFields: ProductFields, fields: Record<any, any>, inventoryFields: InventoryFields, map: FieldsMap) {
         if (!isNativeType(NativeTypes.OBJECT, fields)) {
-            return false;
+            return;
         }
-        for (const [key, value] of Object.entries(fields)) {
-            const currentSensitiveField = InventoriesValidations.existingField(key, insInventory);
-            if(!currentSensitiveField) {
-                return false;
+        Object.keys(fields).forEach(field => {
+            const value = fields[field];
+            const sensField = InventoriesValidations.existingField(field, map);
+            if(!sensField) {
+                return;
             }
-            const expectedValueType = inventoryFields[currentSensitiveField].type;
-            const validatedValue = ProductsValidations.validProductValue(expectedValueType, value);
+            const expectedType = inventoryFields[sensField].type;
+            const validatedValue = ProductsValidations.validProductValue(expectedType, value);
             if(isNativeType(NativeTypes.UNDEFINED, validatedValue)) {
-                return false;
+                return;
             }
-            productFields[insensitive(currentSensitiveField)] = validatedValue;
-        }
-        return true;
+            productFields[insensitive(sensField)] = validatedValue;
+        });
     }
 
-    static validProductValue (expected: InventoryDataTypes, value: any) {
+    static validProductValue(expected: InventoryDataTypes, value: any) {
         if (!isNativeType(NativeTypes.STRING, value)) {
             return undefined;
         }
@@ -57,19 +57,7 @@ export class ProductsValidations {
         }
         if (expected == InventoryDataTypes.ARRAY) {
             try {
-                const array = JSON.parse(value);
-                if (!isNativeType(NativeTypes.ARRAY, array)) {
-                    return undefined;
-                }
-                let valid = true;
-                array.forEach((item: string) => {
-                    if (!valid) {
-                        return;
-                    }
-                    if (!isNativeType(NativeTypes.STRING, item)) {
-                        valid = false;
-                    }
-                });
+                const [valid, array] = ProductsValidations.validArray(value);
                 if (valid) {
                     return array;
                 }
@@ -78,6 +66,23 @@ export class ProductsValidations {
             }
         }
         return undefined;
+    }
+
+    private static validArray(value: string): [boolean, string[]] {
+        const array = JSON.parse(value);
+        if (!isNativeType(NativeTypes.ARRAY, array)) {
+            return [false, []];
+        }
+        let valid = true;
+        array.forEach((item: string) => {
+            if (!valid) {
+                return;
+            }
+            if (!isNativeType(NativeTypes.STRING, item)) {
+                valid = false;
+            }
+        });
+        return [valid, array];
     }
 
     static formatFields(inventoryFields: InventoryFields, productFields: ProductFields, map: FieldsMap, showAllFields: boolean): Record<SensitiveString, any> {
@@ -94,8 +99,11 @@ export class ProductsValidations {
             if (inventoryFields[senField].type == InventoryDataTypes.STRING) {
                 productFields[insField] = escape(productFields[insField]);
             }
-            if (inventoryFields[senField].type == InventoryDataTypes.ARRAY) {
+            else if (inventoryFields[senField].type == InventoryDataTypes.ARRAY) {
                 productFields[insField] = productFields[insField].map((s: string) => escape(s));
+            }
+            else if (inventoryFields[senField].type == InventoryDataTypes.IMAGE) {
+                productFields[insField] = senField;
             }
             newProductFields[senField] = productFields[insField];
         });

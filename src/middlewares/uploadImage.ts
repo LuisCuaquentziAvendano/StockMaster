@@ -1,7 +1,7 @@
 import { Request } from 'express';
 import multer, { FileFilterCallback } from 'multer';
 import multerS3 from 'multer-s3';
-import { s3 } from '../controllers/_s3Connection';
+import { s3 } from '../s3Connection';
 import { S3_BUCKET } from '../utils/envVariables';
 
 const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
@@ -17,10 +17,8 @@ const storage = multerS3({
     },
     acl: 'public-read',
     key: (req: Request, file: Express.Multer.File, cb) => {
-        const timestamp = new Date().getTime();
-        req.index++;
-        cb(null, `${timestamp}_${req.index}_${file.originalname}`);
+        cb(null, `${req.product._id}_${file.fieldname}`);
     }
 });
 
-export const uploadFile = multer({ fileFilter, storage });
+export const uploadImage = multer({ fileFilter, storage });
