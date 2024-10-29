@@ -16,8 +16,6 @@ router.get('/getInventories',
     validateToken,
     UsersController.getInventories);
 
-router.put('/verifyEmail/:token', UsersController.verifyEmail);
-
 router.put('/generateNewToken',
     validateToken,
     UsersController.generateNewToken);

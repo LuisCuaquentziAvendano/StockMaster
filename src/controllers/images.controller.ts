@@ -9,6 +9,46 @@ import { InventoriesValidations } from './_inventoriesUtils';
 import { insensitive } from '../types';
 
 export class ImagesController {
+/**
+ * @swagger
+ * /api/images/getImage:
+ *   put:
+ *     tags: ["images"]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *       - name: product
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *       - name: field
+ *         in: query
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "productImage"
+ *     responses:
+ *       200:
+ *         description: Image retrieved successfully
+ *       401:
+ *         description: Invalid authentication
+ *       404:
+ *         description: Inventory, product or image not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotFound'
+ *       500:
+ *         description: Server error
+ */
     static getImage(req: Request, res: Response) {
         const field = req.query.field as string;
         const user = req.user;

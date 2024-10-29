@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { startSession, mongo, Schema } from 'mongoose';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import { hash, compare } from 'bcrypt';
+import { sign } from 'jsonwebtoken';
 import { User, Inventory, Product } from '../models';
 import { IUser, IInventory, LoginJwtPayload } from '../types';
 import { UserRoles } from '../utils/roles';
@@ -74,13 +74,13 @@ export class UsersController {
             name,
             email,
             password,
-            status: UserStatus.ACTIVE  // status should be new
+            status: UserStatus.ACTIVE
         };
         let session: mongo.ClientSession;
         Promise.all([
             startSession(),
             User.countDocuments({ email: user.email }),
-            bcrypt.hash(user.password, UsersController.ENCRYPTION_ROUNDS)
+            hash(user.password, UsersController.ENCRYPTION_ROUNDS)
         ]).then(result => {
             session = result[0];
             session.startTransaction();
@@ -102,7 +102,7 @@ export class UsersController {
         }).then(() => {
             return session.commitTransaction();
         }).then(() => {
-            res.sendStatus(HTTP_STATUS_CODES.CREATED);  // send confirmation email
+            res.sendStatus(HTTP_STATUS_CODES.CREATED);
             session.endSession();
         }).catch((error: Error) => {
             if (error.message != '') {
@@ -187,7 +187,7 @@ export class UsersController {
                 res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
                 throw new Error('');
             }
-            return Promise.all([user, bcrypt.compare(password, user.password)]);
+            return Promise.all([user, compare(password, user.password)]);
         }).then(result => {
             const [user, validLogin] = result;
             if (validLogin) {
@@ -304,10 +304,6 @@ export class UsersController {
         }).catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
         });
-    }
-
-    static verifyEmail(req: Request, res: Response) {
-        // 
     }
 
 /**
@@ -449,7 +445,7 @@ export class UsersController {
         }
         const user = req.user;
         const token = UsersController.createToken(user._id);
-        bcrypt.hash(password, UsersController.ENCRYPTION_ROUNDS)
+        hash(password, UsersController.ENCRYPTION_ROUNDS)
         .then(passwordHash => {
             return User.updateOne({
                 _id: user._id
@@ -537,7 +533,7 @@ export class UsersController {
     
     private static createToken(_id: Schema.Types.ObjectId): string {
         const payload: LoginJwtPayload = { _id, timestamp: Date.now() };
-        const token = jwt.sign(payload, JWT_KEY);
+        const token = sign(payload, JWT_KEY);
         return token;
     }
 }

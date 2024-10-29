@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { verify } from 'jsonwebtoken';
 import { User } from '../models';
 import { IUser, LoginJwtPayload } from '../types';
 import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
@@ -20,7 +20,7 @@ export function validateToken(req: Request, res: Response, next: NextFunction) {
     }
     const token = authorization.slice(prefix.length);
     try {
-        payload = jwt.verify(token, JWT_KEY) as LoginJwtPayload;
+        payload = verify(token, JWT_KEY) as LoginJwtPayload;
         User.findOne({
             _id: payload._id,
             status: UserStatus.ACTIVE,
