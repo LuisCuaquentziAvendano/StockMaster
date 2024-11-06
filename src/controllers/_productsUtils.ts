@@ -29,12 +29,7 @@ export class ProductsValidations {
         if (!isNativeType(NativeTypes.STRING, value)) {
             return undefined;
         }
-        if (expected == InventoryDataTypes.STRING) {
-            if (value == '') {
-                return null;
-            }
-            return value;
-        } else if (insensitive(value) == Tokens.NULL) {
+        if (value == '') {
             return null;
         }
         if (expected == InventoryDataTypes.INTEGER && isType(Regex.INTEGER, value)) {
