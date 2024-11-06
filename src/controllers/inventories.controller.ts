@@ -233,6 +233,28 @@ export class InventoriesController {
         });
     }
 
+    static updateData(req: Request, res: Response) {
+        if (!isNativeType(NativeTypes.OBJECT, req.body)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
+            return;
+        }
+        const name = req.body.name;
+        if (!InventoriesValidations._name(name)) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid inventory data' });
+            return;
+        }
+        const inventory = req.inventory;
+        Inventory.updateOne({
+            _id: inventory._id
+        }, {
+            name
+        }).then(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
+        }).catch(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+        });
+    }
+
 /**
  * @swagger
  * /api/inventories/createField:

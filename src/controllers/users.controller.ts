@@ -391,7 +391,7 @@ export class UsersController {
             res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
         }).catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
-        })
+        });
     }
 
 /**
@@ -457,7 +457,7 @@ export class UsersController {
             res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
         }).catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
-        })
+        });
     }
 
 /**

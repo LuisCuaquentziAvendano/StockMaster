@@ -18,6 +18,11 @@ router.get('/getPermissions',
     validateRole([UserRoles.ADMIN]),
     InventoriesController.getPermissions);
 
+router.put('/updateData',
+    getInventory,
+    validateRole([UserRoles.ADMIN]),
+    InventoriesController.updateData);
+
 router.put('/createField',
     getInventory,
     validateRole([UserRoles.ADMIN]),
