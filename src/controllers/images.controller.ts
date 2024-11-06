@@ -12,7 +12,7 @@ export class ImagesController {
 /**
  * @swagger
  * /api/images/getImage:
- *   put:
+ *   get:
  *     tags: ["images"]
  *     security:
  *       - bearerAuth: []
