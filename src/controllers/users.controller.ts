@@ -348,7 +348,7 @@ export class UsersController {
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/UpdateDataUser'
+ *             $ref: '#/components/schemas/UpdateUserData'
  *     responses:
  *       200:
  *         description: User data updated successfully
@@ -365,7 +365,7 @@ export class UsersController {
  * 
  * components:
  *   schemas:
- *     UpdateDataUser:
+ *     UpdateUserData:
  *       type: object
  *       properties:
  *         name:

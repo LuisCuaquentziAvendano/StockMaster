@@ -184,6 +184,8 @@ export class InventoriesController {
  *               $ref: '#/components/schemas/InventoryPermissions'
  *       401:
  *         description: Invalid authentication
+ *       403:
+ *         description: No permissions for this action
  *       404:
  *         description: Inventory not found
  *         content:
@@ -233,6 +235,58 @@ export class InventoriesController {
         });
     }
 
+/**
+ * @swagger
+ * /api/inventories/updateData:
+ *   put:
+ *     tags: ["inventories"]
+ *     description: "Only 'admin' user can access to this endpoint."
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: inventory
+ *         in: header
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: "6709865e4441a6a26ba4bf10"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateInventoryData'
+ *     responses:
+ *       200:
+ *         description: Data updated successfully
+ *       400:
+ *         description: Invalid data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid authentication
+ *       403:
+ *         description: No permissions for this action
+ *       404:
+ *         description: Inventory not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotFound'
+ *       500:
+ *         description: Server error
+ * 
+ * components:
+ *   schemas:
+ *     UpdateInventoryData:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *           example: "My second inventory"
+ */
     static updateData(req: Request, res: Response) {
         if (!isNativeType(NativeTypes.OBJECT, req.body)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
@@ -287,6 +341,8 @@ export class InventoriesController {
  *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Invalid authentication
+ *       403:
+ *         description: No permissions for this action
  *       404:
  *         description: Inventory not found
  *         content:
@@ -420,6 +476,8 @@ export class InventoriesController {
  *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Invalid authentication
+ *       403:
+ *         description: No permissions for this action
  *       404:
  *         description: Inventory not found
  *         content:
@@ -555,6 +613,8 @@ export class InventoriesController {
  *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Invalid authentication
+ *       403:
+ *         description: No permissions for this action
  *       404:
  *         description: Inventory not found
  *         content:
@@ -649,6 +709,8 @@ export class InventoriesController {
  *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Invalid authentication
+ *       403:
+ *         description: No permissions for this action
  *       404:
  *         description: Inventory not found
  *         content:
@@ -739,6 +801,8 @@ export class InventoriesController {
  *         description: Inventory deleted successfully
  *       401:
  *         description: Invalid authentication
+ *       403:
+ *         description: No permissions for this action
  *       404:
  *         description: Inventory not found
  *         content:

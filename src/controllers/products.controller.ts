@@ -20,6 +20,7 @@ export class ProductsController {
  * /api/products/createProduct:
  *   post:
  *     tags: ["products"]
+ *     description: "Only 'admin' and 'stock' users can access to this endpoint."
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -50,6 +51,8 @@ export class ProductsController {
  *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Invalid authentication
+ *       403:
+ *         description: No permissions for this action
  *       500:
  *         description: Server error
  * 
@@ -140,7 +143,11 @@ export class ProductsController {
  *       401:
  *         description: Invalid authentication
  *       404:
- *         description: Product not found
+ *         description: Inventory or product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotFound'
  *       500:
  *         description: Server error
  * 
@@ -309,6 +316,7 @@ export class ProductsController {
  * /api/products/updateProduct:
  *   put:
  *     tags: ["products"]
+ *     description: "Only 'admin' and 'stock' users can access to this endpoint."
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -341,8 +349,14 @@ export class ProductsController {
  *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Invalid authentication
+ *       403:
+ *         description: No permissions for this action
  *       404:
- *         description: Product not found
+ *         description: Inventory or product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotFound'
  *       500:
  *         description: Server error
  * 
@@ -391,6 +405,7 @@ export class ProductsController {
  * /api/products/deleteProduct:
  *   delete:
  *     tags: ["products"]
+ *     description: "Only 'admin' and 'stock' users can access to this endpoint."
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -417,8 +432,14 @@ export class ProductsController {
  *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Invalid authentication
+ *       403:
+ *         description: No permissions for this action
  *       404:
- *         description: Product not found
+ *         description: Inventory or product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotFound'
  *       500:
  *         description: Server error
  * 
