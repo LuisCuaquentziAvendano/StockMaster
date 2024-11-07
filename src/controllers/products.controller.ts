@@ -89,21 +89,15 @@ export class ProductsController {
         Object.keys(insInventory).forEach((field: InsensitiveString) => {
             product.fields[field] = null;
         });
-        const imageFields = Object.keys(inventory.fields).filter((field: SensitiveString) => inventory.fields[field].type == InventoryDataTypes.IMAGE);
-        uploadImage.fields(
-            imageFields.map(
-                field => ({ name: field, maxCount: 1 })
-            )
-        )(req, res, () => {
-            const fields = req.body;
-            ProductsValidations.setProductFields(product.fields, fields, inventory.fields, insInventory);
-            ProductsController.setImageNames(req, product.fields);
-            Product.create(product)
-            .then((product: IProduct) => {
+        Product.create(product)
+        .then((product: IProduct) => {
+            req.product = product;
+            const callback = () => {
                 res.status(HTTP_STATUS_CODES.CREATED).send({ product: product._id });
-            }).catch(() => {
-                res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
-            });
+            }
+            ProductsController.updateFields(req, res, callback);
+        }).catch(() => {
+            res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
         });
     }
 
@@ -376,28 +370,10 @@ export class ProductsController {
  *           example: true
  */
     static updateProduct(req: Request, res: Response) {
-        const inventory = req.inventory;
-        const product = req.product;
-        const insInventory = InventoriesValidations.insensitiveFields(inventory.fields);
-        const imageFields = Object.keys(inventory.fields).filter((field: SensitiveString) => inventory.fields[field].type == InventoryDataTypes.IMAGE);
-        uploadImage.fields(
-            imageFields.map(
-                field => ({ name: field, maxCount: 1 })
-            )
-        )(req, res, () => {
-            const fields = req.body;
-            ProductsValidations.setProductFields(product.fields, fields, inventory.fields, insInventory);
-            ProductsController.setImageNames(req, product.fields);
-            Product.updateOne({
-                _id: product._id
-            }, {
-                fields: product.fields
-            }).then(() => {
-                res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
-            }).catch(() => {
-                res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
-            });
-        });
+        const callback = () => {
+            res.sendStatus(HTTP_STATUS_CODES.SUCCESS);
+        }
+        ProductsController.updateFields(req, res, callback);
     }
 
 /**
@@ -463,6 +439,31 @@ export class ProductsController {
         })
         .catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR); 
+        });
+    }
+
+    static updateFields(req: Request, res: Response, callback: (() => void)) {
+        const inventory = req.inventory;
+        const product = req.product;
+        const insInventory = InventoriesValidations.insensitiveFields(inventory.fields);
+        const imageFields = Object.keys(inventory.fields).filter((field: SensitiveString) => inventory.fields[field].type == InventoryDataTypes.IMAGE);
+        uploadImage.fields(
+            imageFields.map(
+                field => ({ name: field, maxCount: 1 })
+            )
+        )(req, res, () => {
+            const fields = req.body;
+            ProductsValidations.setProductFields(product.fields, fields, inventory.fields, insInventory);
+            ProductsController.setImageNames(req, product.fields);
+            Product.updateOne({
+                _id: product._id
+            }, {
+                fields: product.fields
+            }).then(() => {
+                callback();
+            }).catch(() => {
+                res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
+            });
         });
     }
 
