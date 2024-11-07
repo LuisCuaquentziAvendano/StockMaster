@@ -32,6 +32,9 @@ export class ProductsValidations {
         if (value == '') {
             return null;
         }
+        if (expected == InventoryDataTypes.STRING) {
+            return value;
+        }
         if (expected == InventoryDataTypes.INTEGER && isType(Regex.INTEGER, value)) {
             return value;
         }
