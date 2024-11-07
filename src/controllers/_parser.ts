@@ -54,6 +54,9 @@ export class Parser {
         if (!matches) {
             return [false, {}];
         }
+        matches.forEach(match => {
+            validQuery = validQuery && match != Operators.AND_SPECIAL;
+        });
         for (let i = 0; i < matches.length && validQuery; i++) {
             if (isType(Regex.SPACE, matches[i]))
                 continue;
@@ -100,7 +103,7 @@ export class Parser {
                 query.push(insensitiveField);
                 continue;
             }
-            if (matches[i] in Operators2.ALL && matches[i] != Operators.AND_SPECIAL) {
+            if (matches[i] in Operators2.ALL) {
                 if (
                     opers.length == 0
                     || opers[opers.length-1] == Operators.OPEN_PAREN
@@ -116,12 +119,11 @@ export class Parser {
             }
             validQuery = false;
         }
-        while (validQuery && tokens.length > 1 && opers.length > 0) {
+        do {
             validQuery = Parser.solve(validQuery, tokens, opers, query);
-        }
+        } while (validQuery && (tokens.length > 1 || opers.length > 0));
         validQuery = Parser.solve(validQuery, tokens, opers, query);
-        const finalQuery = validQuery && query.length == 1
-            && isNativeType(NativeTypes.OBJECT, query[0]) ? query[0] : {};
+        const finalQuery = validQuery ? query[0] : {};
         return [validQuery, finalQuery];
     }
 
@@ -131,6 +133,10 @@ export class Parser {
         }
         
         if (tokens.length == 1 && opers.length == 0) {
+            const token = tokens[0][0];
+            if (token != Tokens.BOOL) {
+                return false;
+            }
             opers.push(Operators.EQUALS);
             tokens.push([Tokens.BOOL, false]);
             query.push(true);
@@ -151,6 +157,7 @@ export class Parser {
 
         // booleans: not
         if (bToken == Tokens.BOOL && oper in Operators2.BOOL_UN) {
+            Parser.checkNotNulls(undefined, bValue, false, bIsField, tokens, opers, query);
             bValue = bIsField ? Parser.booleanEqualsTrue(bValue) : bValue;
             tokens.push([Tokens.BOOL, false]);
             const result = operation(bValue);
@@ -171,11 +178,12 @@ export class Parser {
         let valid = false;
         let toPush: [Tokens, boolean] = [Tokens.BOOL, false];
 
-        // booleans: and, or
+        // booleans: -and-, and, or
         if (
             aToken == Tokens.BOOL && bToken == Tokens.BOOL
             && (oper in Operators2.BOOL_BIN || oper in Operators2.EQUAL)
         ) {
+            Parser.checkNotNulls(aValue, bValue, aIsField, bIsField, tokens, opers, query);
             aValue = aIsField ? Parser.booleanEqualsTrue(aValue) : aValue;
             bValue = bIsField ? Parser.booleanEqualsTrue(bValue) : bValue;
             valid = true;
@@ -186,13 +194,12 @@ export class Parser {
             aToken == Tokens.NUM && bToken == Tokens.NUM
             && (oper in Operators2.NUM_OPER || oper in Operators2.NUM_EQ || oper in Operators2.EQUAL)
         ) {
+            Parser.checkNotNulls(aValue, bValue, aIsField, bIsField, tokens, opers, query);
             if (aIsField) {
                 aValue = formatNumberField(aValue);
-                Parser.fieldNotNull(aValue, tokens, opers, query);
             }
             if (bIsField) {
                 bValue = formatNumberField(bValue);
-                Parser.fieldNotNull(bValue, tokens, opers, query);
             }
             const tokenResult = oper in Operators2.NUM_OPER ? Tokens.NUM : Tokens.BOOL;
             valid = true;
@@ -207,6 +214,7 @@ export class Parser {
                 || (aIsField && !bIsField && oper in Operators2.STR)
             )
         ) {
+            Parser.checkNotNulls(aValue, bValue, aIsField, bIsField, tokens, opers, query);
             if (oper in Operators2.EQUAL) {
                 aValue = aIsField ? aValue : formatStringValue(aValue);
                 bValue = bIsField ? bValue : formatStringValue(bValue);
@@ -224,6 +232,7 @@ export class Parser {
             && (bToken == Tokens.DT || (!bIsField && bToken == Tokens.STR && isType(Regex.DATETIME, bValue)))
             && (oper in Operators2.NUM_EQ || oper in Operators2.EQUAL)
         ) {
+            Parser.checkNotNulls(aValue, bValue, aIsField, bIsField, tokens, opers, query);
             [valid, aValue, bValue] = Parser.checkDate(aValue, aIsField, bValue, bIsField);
         }
 
@@ -233,6 +242,7 @@ export class Parser {
             && aIsField && !bIsField
             && oper in Operators2.ARR
         ) {
+            Parser.checkNotNulls(formatField(aValue), formatField(bValue), aIsField, bIsField, tokens, opers, query);
             aValue = formatField2(aValue);
             valid = true;
         }
@@ -269,6 +279,21 @@ export class Parser {
             }
         }
         return [valid, aValue, bValue];
+    }
+
+    private static checkNotNulls(a: any,
+                                b: any,
+                                aIsField: boolean,
+                                bIsField: boolean,
+                                tokens: Array<[Tokens, boolean]>,
+                                opers: string[],
+                                query: any[]) {
+        if (aIsField) {
+            Parser.fieldNotNull(a, tokens, opers, query);
+        }
+        if (bIsField) {
+            Parser.fieldNotNull(b, tokens, opers, query);
+        }
     }
 
     private static fieldNotNull(value: any,

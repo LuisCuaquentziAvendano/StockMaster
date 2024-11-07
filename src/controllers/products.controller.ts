@@ -259,7 +259,10 @@ export class ProductsController {
         const auxFieldsMap = {} as FieldsMap;
         Object.keys(fieldsMap).forEach((field: InsensitiveString) => {
             const senField = fieldsMap[field];
-            if (inventory.fields[senField].type != InventoryDataTypes.IMAGE) {
+            if (
+                inventory.fields[senField].type != InventoryDataTypes.IMAGE
+                && (inventory.fields[senField].visible || showAllFields)
+            ) {
                 auxFieldsMap[field] = senField;
             }
         });

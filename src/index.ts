@@ -23,5 +23,5 @@ connect(DB_URL)
         console.log(`App is running in port ${PORT}`);
     });
 }).catch(() => {
-    console.log('Ocurrió un error');
+    console.log('Something went wrong');
 });
