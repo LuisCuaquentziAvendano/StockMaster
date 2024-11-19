@@ -10,7 +10,7 @@ import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
 import { UsersValidations } from './_usersUtils';
 import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 import { JWT_KEY } from '../utils/envVariables';
-import { socket } from '../socket';
+import { socket } from './socket.controller';
 
 export class UsersController {
     private static readonly ENCRYPTION_ROUNDS = 10;
