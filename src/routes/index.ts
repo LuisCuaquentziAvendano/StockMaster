@@ -4,6 +4,7 @@ import inventories from './inventories.routes';
 import products from './products.routes';
 import sales from './sales.routes';
 import images from './images.routes';
+import salesRecords from './salesRecords.routes'
 import { getInventory, getProduct, validateRole, validateToken } from '../middlewares';
 import { UserRoles } from '../utils/roles';
 
@@ -79,5 +80,11 @@ router.use('/images',
     getProduct,
     images
 );
+
+router.use('/salesRecords',
+    validateToken,
+    getInventory,
+    validateRole([UserRoles.ADMIN, UserRoles.STOCK]),
+    salesRecords);
 
 export default router;

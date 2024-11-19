@@ -9,7 +9,8 @@ import { swaggerConfig } from './utils/swaggerConfig';
 import routes from './routes';
 import { PORT, HOST, DB_URL } from './utils/envVariables';
 import * as _ from './types/request';
-
+import { Server } from 'socket.io';
+import { socket } from "./socket";
 const app = express();
 
 connect(DB_URL)
@@ -19,9 +20,10 @@ connect(DB_URL)
     app.use('/api', routes);
     const swaggerDocs = swaggerJSDoc(swaggerConfig(HOST));
     app.use('/api/documentation', serve, setup(swaggerDocs));
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
         console.log(`App is running in port ${PORT}`);
     });
+    socket.initialize(server);
 }).catch(() => {
     console.log('Something went wrong');
 });
