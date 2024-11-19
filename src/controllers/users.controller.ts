@@ -235,7 +235,7 @@ export class UsersController {
  *           example: "John Doe"
  */
     static getData(req: Request, res: Response) {
-        const user = req.user;
+        const user = req._user;
         const data = {
             email: user.email,
             name: user.name
@@ -284,7 +284,7 @@ export class UsersController {
  *             example: "query"
  */
     static getInventories(req: Request, res: Response) {
-        const user = req.user;
+        const user = req._user;
         Inventory.find({
             roles: {
                 $elemMatch: { user: user._id }
@@ -322,7 +322,7 @@ export class UsersController {
  *         description: Server error
  */
     static generateNewToken(req: Request, res: Response) {
-        const user = req.user;
+        const user = req._user;
         const newToken = UsersController.createToken(user._id);
         User.updateOne({
             _id: user._id
@@ -382,7 +382,7 @@ export class UsersController {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid user data' });
             return;
         }
-        const user = req.user;
+        const user = req._user;
         User.updateOne({
             _id: user._id
         }, {
@@ -443,7 +443,7 @@ export class UsersController {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid user data' });
             return;
         }
-        const user = req.user;
+        const user = req._user;
         const token = UsersController.createToken(user._id);
         hash(password, UsersController.ENCRYPTION_ROUNDS)
         .then(passwordHash => {
@@ -476,7 +476,7 @@ export class UsersController {
  *         description: Server error
  */
     static deleteUser(req: Request, res: Response) {
-        const user = req.user;
+        const user = req._user;
         let session: mongo.ClientSession;
         Promise.all([
             startSession(),

@@ -88,7 +88,7 @@ export class SalesController {
         }
         
         const { customer, paymentMethodId, products } = req.body;
-        const inventoryId = req.inventory._id;
+        const inventoryId = req._inventory._id;
         const productIds = products.map((p: any) => p.product_id);
 
         Product.find({ _id: { $in: productIds }, inventory: inventoryId })
@@ -342,7 +342,7 @@ export class SalesController {
  *                 example: "confirmed"
  */
     static getSalesByInventory(req: Request, res: Response) {
-        const inventoryId = req.inventory._id;
+        const inventoryId = req._inventory._id;
 
         Sale.find({ inventory: inventoryId })
         .then(sales => {

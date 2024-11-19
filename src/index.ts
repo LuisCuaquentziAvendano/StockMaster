@@ -5,7 +5,7 @@ import { connect } from 'mongoose';
 import swaggerJSDoc from 'swagger-jsdoc';
 import { serve, setup } from 'swagger-ui-express';
 import cors from 'cors';
-import { swaggerConfig } from './swaggerConfig';
+import { swaggerConfig } from './utils/swaggerConfig';
 import routes from './routes';
 import { PORT, HOST, DB_URL } from './utils/envVariables';
 import * as _ from './types/request';

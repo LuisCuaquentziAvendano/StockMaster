@@ -77,7 +77,7 @@ export class ProductsController {
  *           example: "6709865e4441a6a26ba4bf10"
  */
     static createProduct(req: Request, res: Response) {
-        const inventory = req.inventory;
+        const inventory = req._inventory;
         const insInventory = InventoriesValidations.insensitiveFields(inventory.fields);
         const product: IProduct = {
             inventory: inventory._id,
@@ -89,7 +89,7 @@ export class ProductsController {
         });
         Product.create(product)
         .then((product: IProduct) => {
-            req.product = product;
+            req._product = product;
             const callback = () => {
                 res.status(HTTP_STATUS_CODES.CREATED).send({ product: product._id });
             }
@@ -162,9 +162,9 @@ export class ProductsController {
  *               example: true
  */
     static getProductById(req: Request, res: Response) {
-        const user = req.user;
-        const inventory = req.inventory;
-        const product = req.product;
+        const user = req._user;
+        const inventory = req._inventory;
+        const product = req._product;
         const fieldsMap = InventoriesValidations.insensitiveFields(inventory.fields);
         const showAllFields = RolesShowAllFields.includes(user.role);
         const data: Record<any, any> = {
@@ -251,8 +251,8 @@ export class ProductsController {
         if (!Number.isNaN(page) && page >= 0) {
             currentPage = page;
         };
-        const user = req.user;
-        const inventory = req.inventory;
+        const user = req._user;
+        const inventory = req._inventory;
         const showAllFields = RolesShowAllFields.includes(user.role);
         const fieldsMap = InventoriesValidations.insensitiveFields(inventory.fields);
         const auxFieldsMap = {} as FieldsMap;
@@ -431,7 +431,7 @@ export class ProductsController {
  *           example: "Product successfully deleted"
  */
     static deleteProduct(req: Request, res: Response) {
-        const product = req.product;
+        const product = req._product;
         Product.updateOne({
             _id: product._id
         }, {
@@ -445,8 +445,8 @@ export class ProductsController {
     }
 
     static updateFields(req: Request, res: Response, callback: (() => void)) {
-        const inventory = req.inventory;
-        const product = req.product;
+        const inventory = req._inventory;
+        const product = req._product;
         const insInventory = InventoriesValidations.insensitiveFields(inventory.fields);
         const imageFields = Object.keys(inventory.fields).filter((field: SensitiveString) => inventory.fields[field].type == InventoryDataTypes.IMAGE);
         uploadImage.fields(
