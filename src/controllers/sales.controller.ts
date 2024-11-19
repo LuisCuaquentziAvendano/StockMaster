@@ -6,6 +6,7 @@ import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
 import { SaleStatus } from '../utils/status';
 import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 import { STRIPE_KEY } from '../utils/envVariables';
+import { socket } from '../socket';
 
 const stripe = new Stripe(STRIPE_KEY); 
 
@@ -90,6 +91,7 @@ export class SalesController {
         const { customer, paymentMethodId, products } = req.body;
         const inventoryId = req.inventory._id;
         const productIds = products.map((p: any) => p.product_id);
+        const io = socket.getIO();
 
         Product.find({ _id: { $in: productIds }, inventory: inventoryId })
         .then(dbProducts => {
@@ -133,6 +135,13 @@ export class SalesController {
             return sale.save();
         })
         .then(savedSale => {
+            if (products.length > 10) {
+                const userToken = req._user.token; 
+                io.to(userToken).emit("largeSaleNotification", {
+                    message: "A large purchase of more than 10 items has been made!",
+                    sale: savedSale
+                });
+            }
             res.status(HTTP_STATUS_CODES.CREATED).send(savedSale);
         })
         .catch(() => {
@@ -189,6 +198,7 @@ export class SalesController {
  */
     static refundPurchase(req: Request, res: Response) {
         const { saleId } = req.body;
+        const io = socket.getIO();
         
         Sale.findById(saleId)
         .then(sale => {
@@ -209,6 +219,11 @@ export class SalesController {
         })
         .then(updatedSale => {
             if (updatedSale) {
+                const userToken = req._user.token; 
+                io.to(userToken).emit("refundNotification", {
+                    message: "A purchase refund has been made!",
+                    refund: updatedSale
+                });
                 res.status(HTTP_STATUS_CODES.SUCCESS).send(updatedSale);
             }
         })

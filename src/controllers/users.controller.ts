@@ -10,6 +10,7 @@ import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
 import { UsersValidations } from './_usersUtils';
 import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 import { JWT_KEY } from '../utils/envVariables';
+import { socket } from '../socket';
 
 export class UsersController {
     private static readonly ENCRYPTION_ROUNDS = 10;
@@ -191,6 +192,8 @@ export class UsersController {
         }).then(result => {
             const [user, validLogin] = result;
             if (validLogin) {
+                const io = socket.getIO();
+                io.emit("joinRoom", user.token);
                 res.send({ authorization: user.token });
             } else {
                 res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
