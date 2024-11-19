@@ -9,7 +9,7 @@ import * as _ from './types/request';
 import routes from './routes';
 import { swaggerConfig } from './utils/swaggerConfig';
 import { socket } from "./controllers";
-import { PORT, HOST, DB_URL } from './utils/envVariables';
+import { PORT, API_URL, DB_URL } from './utils/envVariables';
 
 const app = express();
 
@@ -18,7 +18,7 @@ connect(DB_URL)
     console.log('Connected to database');
     app.use(cors());
     app.use('/api', routes);
-    const swaggerDocs = swaggerJSDoc(swaggerConfig(HOST));
+    const swaggerDocs = swaggerJSDoc(swaggerConfig(API_URL));
     app.use('/api/documentation', serve, setup(swaggerDocs));
     const server = app.listen(PORT, () => {
         console.log(`App is running in port ${PORT}`);
