@@ -6,7 +6,7 @@ import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
 import { SaleStatus } from '../utils/status';
 import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 import { STRIPE_KEY } from '../utils/envVariables';
-import { socket } from '../socket';
+import { socket } from './socket.controller';
 
 const stripe = new Stripe(STRIPE_KEY); 
 
