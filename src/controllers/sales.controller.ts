@@ -137,6 +137,7 @@ export class SalesController {
         .then(savedSale => {
             if (products.length > 10) {
                 const userToken = req._user.token; 
+                io.emit("joinRoom", req._user.token);
                 io.to(userToken).emit("largeSaleNotification", {
                     message: "A large purchase of more than 10 items has been made!",
                     sale: savedSale
@@ -221,6 +222,7 @@ export class SalesController {
             if (updatedSale) {
                 const userToken = req._user.token; 
                 console.log(userToken);
+                io.emit("joinRoom", req._user.token);
                 io.to(userToken).emit("refundNotification", {
                     message: "A purchase refund has been made!",
                     refund: updatedSale

@@ -192,8 +192,6 @@ export class UsersController {
         }).then(result => {
             const [user, validLogin] = result;
             if (validLogin) {
-                const io = socket.getIO();
-                io.emit("joinRoom", user.token);
                 res.send({ authorization: user.token });
             } else {
                 res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
