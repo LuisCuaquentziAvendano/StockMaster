@@ -135,9 +135,9 @@ export class SalesController {
             return sale.save();
         })
         .then(savedSale => {
-            if (products.length > 10) {
+            const total = products.reduce((sum: number, product: any) => sum + parseInt(product.amount, 10), 0);
+            if (total > 10) {
                 const userToken = req._user.token; 
-                io.emit("joinRoom", req._user.token);
                 io.to(userToken).emit("largeSaleNotification", {
                     message: "A large purchase of more than 10 items has been made!",
                     sale: savedSale
@@ -222,7 +222,6 @@ export class SalesController {
             if (updatedSale) {
                 const userToken = req._user.token; 
                 console.log(userToken);
-                io.emit("joinRoom", req._user.token);
                 io.to(userToken).emit("refundNotification", {
                     message: "A purchase refund has been made!",
                     refund: updatedSale
