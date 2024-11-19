@@ -23,6 +23,11 @@ class SocketService {
         this.io.on("connection", (socket) => {
             console.log(`new connection: ${socket.id}`);
 
+            socket.on('listRooms', () => {
+                const rooms = Array.from(this.io.sockets.adapter.rooms.keys());
+                socket.emit('roomsList', rooms);
+            });
+
             socket.on("joinRoom", (token: string) => {
                 socket.join(token);
                 console.log(`Socket ${socket.id} joined room: ${token}`);
