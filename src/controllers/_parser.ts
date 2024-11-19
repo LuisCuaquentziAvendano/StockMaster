@@ -2,7 +2,6 @@ import { Operators, Operators2 } from '../utils/queryOperators';
 import { InventoryFields, FIELDS, FieldsMap, insensitive, InsensitiveString } from '../types';
 import { Tokens, inventoryTypeToToken } from '../utils/inventoryDataTypes';
 import { Regex, isType, scapeRegexChars } from '../utils/regex';
-import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 
 const MONGO_OPERS: Record<string, (a: any, b?: any) => any> = Object.freeze({
     [Operators.SUM]: (a: any, b: any) => ({ $add: [a, b] }),
@@ -137,7 +136,7 @@ export class Parser {
             if (token != Tokens.BOOL) {
                 return false;
             }
-            opers.push(Operators.EQUALS);
+            opers.push(Operators.AND);
             tokens.push([Tokens.BOOL, false]);
             query.push(true);
         }
@@ -181,7 +180,7 @@ export class Parser {
         // booleans: -and-, and, or
         if (
             aToken == Tokens.BOOL && bToken == Tokens.BOOL
-            && (oper in Operators2.BOOL_BIN || oper in Operators2.EQUAL)
+            && oper in Operators2.BOOL_BIN
         ) {
             Parser.checkNotNulls(aValue, bValue, aIsField, bIsField, tokens, opers, query);
             aValue = aIsField ? Parser.booleanEqualsTrue(aValue) : aValue;
@@ -195,12 +194,8 @@ export class Parser {
             && (oper in Operators2.NUM_OPER || oper in Operators2.NUM_EQ || oper in Operators2.EQUAL)
         ) {
             Parser.checkNotNulls(aValue, bValue, aIsField, bIsField, tokens, opers, query);
-            if (aIsField) {
-                aValue = formatNumberField(aValue);
-            }
-            if (bIsField) {
-                bValue = formatNumberField(bValue);
-            }
+            aValue = aIsField ? formatNumberField(aValue) : aValue;
+            bValue = bIsField ? formatNumberField(bValue) : bValue;
             const tokenResult = oper in Operators2.NUM_OPER ? Tokens.NUM : Tokens.BOOL;
             valid = true;
             toPush = [tokenResult, false];
@@ -214,12 +209,13 @@ export class Parser {
                 || (aIsField && !bIsField && oper in Operators2.STR)
             )
         ) {
-            Parser.checkNotNulls(aValue, bValue, aIsField, bIsField, tokens, opers, query);
             if (oper in Operators2.EQUAL) {
+                Parser.checkNotNulls(aValue, bValue, aIsField, bIsField, tokens, opers, query);
                 aValue = aIsField ? aValue : formatStringValue(aValue);
                 bValue = bIsField ? bValue : formatStringValue(bValue);
             }
-            if (oper in Operators2.STR) {
+            else if (oper in Operators2.STR) {
+                Parser.checkNotNulls(formatField(aValue), formatField(bValue), aIsField, bIsField, tokens, opers, query);
                 aValue = formatField2(aValue);
                 bValue = scapeRegexChars(bValue);
             }
@@ -307,6 +303,6 @@ export class Parser {
     }
 
     private static booleanEqualsTrue(value: any): any {
-        return MONGO_OPERS[Operators.EQUALS](value, true);
+        return MONGO_OPERS[Operators.AND](value, true);
     }
 }

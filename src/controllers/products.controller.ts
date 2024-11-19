@@ -8,9 +8,7 @@ import { GeneralUseStatus } from '../utils/status';
 import { InventoriesValidations } from './_inventoriesUtils';
 import { ProductsValidations } from './_productsUtils';
 import { InventoryDataTypes } from '../utils/inventoryDataTypes';
-import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 import { RolesShowAllFields } from '../utils/roles';
-import { ImagesController } from './images.controller';
 
 export class ProductsController {
     private static readonly PRODUCTS_PER_PAGE = 20;
@@ -192,9 +190,14 @@ export class ProductsController {
  *           type: string
  *       - name: query
  *         in: query
- *         required: true
+ *         required: false
  *         schema:
  *           type: string
+ *       - name: page
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: number
  *     responses:
  *       200:
  *         description: Products fetched successfully
@@ -241,17 +244,13 @@ export class ProductsController {
  */
     static getProductsByQuery(req: Request, res: Response) {
         const query = (req.query.query || '') as string;
-        let page = req.query.page as string;
+        let page = Number.parseInt(req.query.page as string);
         let currentPage = 0;
         let totalProducts: number;
         let lastPage: number;
-        if (
-            isNativeType(NativeTypes.STRING, page)
-            && Number.isInteger(page)
-            && Number.parseInt(page) >= 0
-        ) {
-            currentPage = Number.parseInt(page);
-        }
+        if (!Number.isNaN(page) && page >= 0) {
+            currentPage = page;
+        };
         const user = req.user;
         const inventory = req.inventory;
         const showAllFields = RolesShowAllFields.includes(user.role);
