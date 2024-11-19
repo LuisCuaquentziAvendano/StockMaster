@@ -32,7 +32,7 @@ export function validateToken(req: Request, res: Response, next: NextFunction) {
                 res.sendStatus(HTTP_STATUS_CODES.UNAUTHORIZED);
                 throw new Error('');
             }
-            req.user = user;
+            req._user = user;
             next();
         }).catch((error: Error) => {
             if (error.message != '') {

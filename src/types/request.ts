@@ -5,7 +5,7 @@ import { IUser } from './user';
 declare global {
     namespace Express {
         interface Request {
-            user?: IUser;
+            _user?: IUser;
             inventory?: IInventory;
             product?: IProduct;
         }

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { GetObjectCommand, GetObjectCommandOutput } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
-import { s3 } from '../s3Connection';
+import { s3 } from '../utils/s3Connection';
 import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
 import { S3_BUCKET } from '../utils/envVariables';
 import { RolesShowAllFields } from '../utils/roles';
@@ -51,7 +51,7 @@ export class ImagesController {
  */
     static getImage(req: Request, res: Response) {
         const field = req.query.field as string;
-        const user = req.user;
+        const user = req._user;
         const inventory = req.inventory;
         const product = req.product;
         const map = InventoriesValidations.insensitiveFields(inventory.fields);

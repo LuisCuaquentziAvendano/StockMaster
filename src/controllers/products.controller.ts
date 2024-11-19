@@ -162,7 +162,7 @@ export class ProductsController {
  *               example: true
  */
     static getProductById(req: Request, res: Response) {
-        const user = req.user;
+        const user = req._user;
         const inventory = req.inventory;
         const product = req.product;
         const fieldsMap = InventoriesValidations.insensitiveFields(inventory.fields);
@@ -251,7 +251,7 @@ export class ProductsController {
         if (!Number.isNaN(page) && page >= 0) {
             currentPage = page;
         };
-        const user = req.user;
+        const user = req._user;
         const inventory = req.inventory;
         const showAllFields = RolesShowAllFields.includes(user.role);
         const fieldsMap = InventoriesValidations.insensitiveFields(inventory.fields);

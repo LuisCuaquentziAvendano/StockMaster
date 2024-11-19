@@ -66,7 +66,7 @@ export class InventoriesController {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid inventory data' });
             return;
         }
-        const user = req.user;
+        const user = req._user;
         const assignedRole: AssignedRole = {
             user: user._id,
             role: UserRoles.ADMIN
@@ -148,7 +148,7 @@ export class InventoriesController {
  *           example: "admin"
  */
     static getInventory(req: Request, res: Response) {
-        const user = req.user;
+        const user = req._user;
         const inventory = req.inventory;
         const showAllFields = RolesShowAllFields.includes(user.role);
         const data: Record<any, any> = {
@@ -744,7 +744,7 @@ export class InventoriesController {
         }
         const email = req.body.email;
         const role = req.body.role;
-        const user = req.user;
+        const user = req._user;
         if (!InventoriesValidations.roleAssignment(email, role, user)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid permission data' });
             return;
