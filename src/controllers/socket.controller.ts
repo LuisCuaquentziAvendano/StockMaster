@@ -25,6 +25,7 @@ class SocketService {
 
             socket.on("joinRoom", (token: string) => {
                 socket.join(token);
+                socket.emit("roomJoined", { room: token });
                 console.log(`Socket ${socket.id} joined room: ${token}`);
             });
         });  
