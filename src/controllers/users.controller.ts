@@ -245,6 +245,8 @@ export class UsersController {
             res.redirect(`${FRONTEND_URL}/inventories?authorization=${userLogged.token}`);
         }).catch(() => {
             res.redirect(FRONTEND_URL);
+        }).finally(() => {
+            req.session.destroy(() => {});
         });
     }
 

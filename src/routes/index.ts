@@ -1,4 +1,6 @@
-import { Router, json, Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
+import swaggerJSDoc from 'swagger-jsdoc';
+import { serve, setup } from 'swagger-ui-express';
 import users from './users.routes';
 import inventories from './inventories.routes';
 import products from './products.routes';
@@ -7,9 +9,9 @@ import images from './images.routes';
 import salesRecords from './salesRecords.routes'
 import { getInventory, getProduct, validateRole, validateToken } from '../middlewares';
 import { UserRoles } from '../utils/roles';
+import { swaggerConfig } from '../utils/swaggerConfig';
 
 const router = Router();
-router.use(json());
 
 /**
  * @swagger
@@ -73,18 +75,20 @@ router.use('/sales',
     getInventory,
     sales);
 
-router.use('/images',
-    validateToken,
-    getInventory,
-    validateRole([UserRoles.ADMIN, UserRoles.STOCK, UserRoles.QUERY]),
-    getProduct,
-    images
-);
-
 router.use('/salesRecords',
     validateToken,
     getInventory,
     validateRole([UserRoles.ADMIN, UserRoles.STOCK]),
     salesRecords);
+
+router.use('/images',
+    validateToken,
+    getInventory,
+    validateRole([UserRoles.ADMIN, UserRoles.STOCK, UserRoles.QUERY]),
+    getProduct,
+    images);
+
+const swaggerDocs = swaggerJSDoc(swaggerConfig);
+router.use('/documentation', serve, setup(swaggerDocs));
 
 export default router;

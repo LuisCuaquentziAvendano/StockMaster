@@ -21,12 +21,9 @@ class SocketService {
         this.io = new Server(server, { cors: { origin: "*" } });
 
         this.io.on("connection", (socket) => {
-            console.log(`new connection: ${socket.id}`);
-
             socket.on("joinRoom", (token: string) => {
                 socket.join(token);
                 socket.emit("roomJoined", { room: token });
-                console.log(`Socket ${socket.id} joined room: ${token}`);
             });
         });  
     }

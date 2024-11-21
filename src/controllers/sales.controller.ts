@@ -220,8 +220,7 @@ export class SalesController {
         })
         .then(updatedSale => {
             if (updatedSale) {
-                const userToken = req._user.token; 
-                console.log(userToken);
+                const userToken = req._user.token;
                 io.to(userToken).emit("refundNotification", {
                     message: "A purchase refund has been made!",
                     refund: updatedSale
