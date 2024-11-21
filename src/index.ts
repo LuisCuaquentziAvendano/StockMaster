@@ -26,6 +26,7 @@ connect(DB_URL)
         console.log(`App is running in port ${PORT}`);
     });
     socket.initialize(server);
-}).catch(() => {
+}).catch((error: Error) => {
     console.log('Something went wrong');
+    console.log(error);
 });
