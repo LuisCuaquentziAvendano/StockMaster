@@ -28,5 +28,5 @@ connect(DB_URL)
     socket.initialize(server);
 }).catch((error: Error) => {
     console.log('Something went wrong');
-    console.log(error);
+    console.log(error.message);
 });
