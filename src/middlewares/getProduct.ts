@@ -23,7 +23,7 @@ export function getProduct(req: Request, res: Response, next: NextFunction) {
             res.status(HTTP_STATUS_CODES.NOT_FOUND).send({ error: 'Product not found' });
             throw new Error('');
         }
-        req._product = product;
+        req.product = product;
         next();
     }).catch((error: Error) => {
         if (error.message != '') {

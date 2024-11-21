@@ -23,7 +23,7 @@ export function getInventory(req: Request, res: Response, next: NextFunction) {
             res.status(HTTP_STATUS_CODES.NOT_FOUND).send({ error: 'Inventory not found' });
             throw new Error('');
         }
-        req._inventory = inventory;
+        req.inventory = inventory;
         next();
     }).catch((error: Error) => {
         if (error.message != '') {

@@ -52,8 +52,8 @@ export class ImagesController {
     static getImage(req: Request, res: Response) {
         const field = req.query.field as string;
         const user = req._user;
-        const inventory = req._inventory;
-        const product = req._product;
+        const inventory = req.inventory;
+        const product = req.product;
         const map = InventoriesValidations.insensitiveFields(inventory.fields);
         const sensField = InventoriesValidations.existingField(field, map);
         if (

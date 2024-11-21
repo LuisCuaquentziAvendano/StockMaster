@@ -77,8 +77,8 @@ export class InventoriesController {
             status: GeneralUseStatus.ACTIVE
         };
         Inventory.create(inventory)
-        .then((inventory: IInventory) => {
-            res.status(HTTP_STATUS_CODES.CREATED).send({ inventory: inventory._id });
+        .then((inventoryCreated: IInventory) => {
+            res.status(HTTP_STATUS_CODES.CREATED).send({ inventory: inventoryCreated._id });
         }).catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
         });
@@ -149,7 +149,7 @@ export class InventoriesController {
  */
     static getInventory(req: Request, res: Response) {
         const user = req._user;
-        const inventory = req._inventory;
+        const inventory = req.inventory;
         const showAllFields = RolesShowAllFields.includes(user.role);
         const data: Record<any, any> = {
             inventory: inventory._id,
@@ -218,7 +218,7 @@ export class InventoriesController {
  *             example: "query"
  */
     static getPermissions(req: Request, res: Response) {
-        const inventory = req._inventory;
+        const inventory = req.inventory;
         Promise.all(
             inventory.roles.map(assignedRole => {
                 return User.aggregate([
@@ -297,7 +297,7 @@ export class InventoriesController {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid inventory data' });
             return;
         }
-        const inventory = req._inventory;
+        const inventory = req.inventory;
         Inventory.updateOne({
             _id: inventory._id
         }, {
@@ -384,7 +384,7 @@ export class InventoriesController {
             return;
         }
         let validFields = true;
-        const inventory = req._inventory;
+        const inventory = req.inventory;
         const setNulls: Record<string, null> = {};
         const fieldsMap = InventoriesValidations.insensitiveFields(inventory.fields);
         fieldsToSet.forEach((objectData: Record<string, any>) => {
@@ -507,7 +507,7 @@ export class InventoriesController {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
             return;
         }
-        const inventory = req._inventory;
+        const inventory = req.inventory;
         const fieldsMap = InventoriesValidations.insensitiveFields(inventory.fields);
         const field = InventoriesValidations.existingField(req.body.field, fieldsMap);
         const newName = req.body.newName;
@@ -638,7 +638,7 @@ export class InventoriesController {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
             return;
         }
-        const inventory = req._inventory;
+        const inventory = req.inventory;
         const fieldsMap = InventoriesValidations.insensitiveFields(inventory.fields);
         const field = InventoriesValidations.existingField(req.body.field, fieldsMap);
         if (!field) {
@@ -749,21 +749,21 @@ export class InventoriesController {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid permission data' });
             return;
         }
-        const inventory = req._inventory;
+        const inventory = req.inventory;
         User.findOne({
             email: email,
             status: UserStatus.ACTIVE
         }, {
             password: 0
-        }).then((user: IUser) => {
-            if (!user) {
+        }).then((userFound: IUser) => {
+            if (!userFound) {
                 res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Email not registered' });
                 throw new Error('');
             }
-            inventory.roles = inventory.roles.filter(role => role.user.toString() != user._id.toString());
+            inventory.roles = inventory.roles.filter(role => role.user.toString() != userFound._id.toString());
             if (role != UserRoles.NONE) {
                 inventory.roles.push({
-                    user: user._id,
+                    user: userFound._id,
                     role
                 });
             }
@@ -813,7 +813,7 @@ export class InventoriesController {
  *         description: Server error
  */
     static deleteInventory(req: Request, res: Response) {
-        const inventory = req._inventory;
+        const inventory = req.inventory;
         let session: mongo.ClientSession;
         startSession().then(_s => {
             session = _s;

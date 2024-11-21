@@ -1,12 +1,21 @@
 import { Router } from 'express';
+import passport from 'passport';
 import { UsersController } from '../controllers';
 import { validateToken } from '../middlewares';
+import { FRONTEND_URL } from '../utils/envVariables';
 
 const router = Router();
 
 router.post('/register', UsersController.register);
 
 router.post('/login', UsersController.login);
+
+router.get('/googleAuth',
+    passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get('/googleRegister',
+    passport.authenticate('google', { failureRedirect: FRONTEND_URL }),
+    UsersController.googleRegister);
 
 router.get('/getData',
     validateToken,
