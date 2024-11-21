@@ -1,3 +1,4 @@
+
 ## INSTITUTO TECNOLÓGICO Y DE ESTUDIOS SUPERIORES DE OCCIDENTE
 ### Tecnologías de Desarrollo en el Servidor
 ### Profesor Francisco Javier Sevilla Medina
@@ -8,16 +9,20 @@
 
 # Stock Master
 Esta es una aplicación realizada con TypeScript, Node.js, MongoDB y otras tecnologías. El objetivo de esta aplicación es el manejo de inventarios, permitiendo a los usuarios crear esquemas de inventarios con los campos que tendrán sus productos, modificar los permisos de acceso al inventario, crear productos y realizar su compra en línea.
-Para descargar y utilizar la aplicación de forma local, se debe hacer lo siguiente:
+Para utilizar la aplicación de forma local, se debe hacer lo siguiente:
 
 ## Paso 1
 Clonar el repositorio, tener instalado Node.js en la computadora y situarse sobre la carpeta raíz `./StockMaster`.
 
 ## Paso 2
-Instalar todas las dependencias de Node.js con el comando `npm install`.
+Crear el archivo .env en la raíz del proyecto y colocar ahí todas las variables de entorno.
 
 ## Paso 3
-Transpilar todos los archivos de TypeScript con el comando `npm run scripts`.
+Instalar todas las dependencias del proyecto con el comando `npm install`.
 
 ## Paso 4
+Transpilar todos los archivos de TypeScript con el comando `npm run build`.
+
+## Paso 5
 Iniciar la API con el comando `npm start`.
+

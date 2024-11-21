@@ -17,7 +17,7 @@ const storage = multerS3({
     },
     acl: 'public-read',
     key: (req: Request, file: Express.Multer.File, cb) => {
-        cb(null, `${req.product._id}_${file.fieldname}`);
+        cb(null, `${req._product._id}_${file.fieldname}`);
     }
 });
 

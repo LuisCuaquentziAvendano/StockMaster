@@ -6,8 +6,8 @@ declare global {
     namespace Express {
         interface Request {
             _user?: IUser;
-            inventory?: IInventory;
-            product?: IProduct;
+            _inventory?: IInventory;
+            _product?: IProduct;
         }
     }
 }
