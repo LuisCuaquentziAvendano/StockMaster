@@ -9,7 +9,7 @@ import { GeneralUseStatus, UserStatus } from '../utils/status';
 import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
 import { UsersValidations } from './_usersUtils';
 import { isNativeType, NativeTypes } from '../utils/nativeTypes';
-import { JWT_KEY } from '../utils/envVariables';
+import { FRONTEND_URL, JWT_KEY } from '../utils/envVariables';
 import { socket } from './socket.controller';
 
 export class UsersController {
@@ -77,42 +77,50 @@ export class UsersController {
             password,
             status: UserStatus.ACTIVE
         };
-        let session: mongo.ClientSession;
-        Promise.all([
-            startSession(),
-            User.countDocuments({ email: user.email }),
-            hash(user.password, UsersController.ENCRYPTION_ROUNDS)
-        ]).then(result => {
-            session = result[0];
-            session.startTransaction();
-            const docs = result[1];
-            const passwordHash = result[2];
+        User.countDocuments({ email: user.email })
+        .then(docs => {
             if (docs > 0) {
                 res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Email already registered' });
                 throw new Error('');
             }
-            user.password = passwordHash;
-            return User.create(user);
-        }).then((userCreated: IUser) => {
-            const token = UsersController.createToken(userCreated._id);
-            return User.updateOne({
-                _id: userCreated._id
-            }, {
-                token
-            });
-        }).then(() => {
-            return session.commitTransaction();
+            return UsersController.registerProcess(user);
         }).then(() => {
             res.sendStatus(HTTP_STATUS_CODES.CREATED);
-            session.endSession();
         }).catch((error: Error) => {
             if (error.message != '') {
                 res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
             }
-            if (session) {
-                session.abortTransaction()
-                .then(() => session.endSession());
-            }
+        });
+    }
+
+    private static async registerProcess(user: IUser): Promise<IUser> {
+        let session: mongo.ClientSession;
+        return Promise.all([
+            startSession(),
+            hash(user.password, UsersController.ENCRYPTION_ROUNDS)
+        ]).then(result => {
+            session = result[0];
+            session.startTransaction();
+            const passwordHash = result[1];
+            user.password = passwordHash;
+            return User.create(user);
+        }).then((userCreated: IUser) => {
+            const token = UsersController.createToken(userCreated._id);
+            userCreated.token = token;
+            return Promise.all([
+                User.updateOne({
+                    _id: userCreated._id
+                }, {
+                    token
+                }),
+                userCreated
+            ]);
+        }).then((result) => {
+            return Promise.all([session.commitTransaction(), result[1]]);
+        }).then((result) => {
+            return result[1];
+        }).finally(() => {
+            session.endSession();
         });
     }
 
@@ -202,6 +210,43 @@ export class UsersController {
             if (error.message != '') {
                 res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
             }
+        });
+    }
+
+/**
+ * @swagger
+ * /api/users/googleAuth:
+ *   get:
+ *     tags: ["users"]
+ *     description: "This endpoint is to login with a Google account. Redirect frontend to this URL to register and login."
+ */
+    static googleRegister(req: Request, res: Response) {
+        const userData = req.user as { _json: { name: string, email: string } };
+        const { name, email } = userData._json;
+        const user: IUser = {
+            name,
+            email,
+            password: '',
+            status: UserStatus.ACTIVE
+        };
+        User.countDocuments({ email: user.email })
+        .then((docs) => {
+            if (docs > 0) {
+                return User.findOne({
+                    email,
+                    status: UserStatus.ACTIVE
+                });
+            }
+            return UsersController.registerProcess(user);
+        }).then((userLogged: IUser) => {
+            if (!userLogged) {
+                throw new Error('');
+            }
+            const io = socket.getIO();
+            io.emit("joinRoom", userLogged.token);
+            res.redirect(`${FRONTEND_URL}/inventories?authorization=${userLogged.token}`);
+        }).catch(() => {
+            res.redirect(FRONTEND_URL);
         });
     }
 

@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import passport from 'passport';
 import { UsersController } from '../controllers';
 import { validateToken } from '../middlewares';
@@ -11,14 +11,11 @@ router.post('/register', UsersController.register);
 router.post('/login', UsersController.login);
 
 router.get('/googleAuth',
-    (req: Request, res: Response, next: NextFunction) => { res.setHeader('Access-Control-Allow-Origin', '*'); next(); },
     passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.post('/googleResponse',
-    passport.authenticate('google', { failureRedirect: '/login' }),
-    (req: Request, res: Response) => {
-        res.redirect(`${FRONTEND_URL}/inventories`);
-    });
+router.get('/googleRegister',
+    passport.authenticate('google', { failureRedirect: FRONTEND_URL }),
+    UsersController.googleRegister);
 
 router.get('/getData',
     validateToken,

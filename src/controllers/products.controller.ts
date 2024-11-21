@@ -88,10 +88,10 @@ export class ProductsController {
             product.fields[field] = null;
         });
         Product.create(product)
-        .then((product: IProduct) => {
-            req.product = product;
+        .then((productCreated: IProduct) => {
+            req.product = productCreated;
             const callback = () => {
-                res.status(HTTP_STATUS_CODES.CREATED).send({ product: product._id });
+                res.status(HTTP_STATUS_CODES.CREATED).send({ product: productCreated._id });
             }
             ProductsController.updateFields(req, res, callback);
         }).catch(() => {

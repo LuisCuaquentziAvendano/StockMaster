@@ -77,8 +77,8 @@ export class InventoriesController {
             status: GeneralUseStatus.ACTIVE
         };
         Inventory.create(inventory)
-        .then((inventory: IInventory) => {
-            res.status(HTTP_STATUS_CODES.CREATED).send({ inventory: inventory._id });
+        .then((inventoryCreated: IInventory) => {
+            res.status(HTTP_STATUS_CODES.CREATED).send({ inventory: inventoryCreated._id });
         }).catch(() => {
             res.sendStatus(HTTP_STATUS_CODES.SERVER_ERROR);
         });
@@ -755,15 +755,15 @@ export class InventoriesController {
             status: UserStatus.ACTIVE
         }, {
             password: 0
-        }).then((user: IUser) => {
-            if (!user) {
+        }).then((userFound: IUser) => {
+            if (!userFound) {
                 res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Email not registered' });
                 throw new Error('');
             }
-            inventory.roles = inventory.roles.filter(role => role.user.toString() != user._id.toString());
+            inventory.roles = inventory.roles.filter(role => role.user.toString() != userFound._id.toString());
             if (role != UserRoles.NONE) {
                 inventory.roles.push({
-                    user: user._id,
+                    user: userFound._id,
                     role
                 });
             }

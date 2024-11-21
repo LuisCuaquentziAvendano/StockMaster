@@ -10,7 +10,7 @@ export const googleAuth = (app: Express) => {
             {
                 clientID: GOOGLE_ID,
                 clientSecret: GOOGLE_SECRET,
-                callbackURL: `${API_URL}/api/users/googleResponse`
+                callbackURL: `${API_URL}/api/users/googleRegister`
             },
             (accessToken: string, refreshToken: string, profile: Profile, cb) => {
                 return cb(null, profile);
