@@ -15,8 +15,10 @@ export function getProduct(req: Request, res: Response, next: NextFunction) {
         res.status(HTTP_STATUS_CODES.NOT_FOUND).send({ error: 'Product not found' });
         return;
     }
+    const inventory = req._inventory;
     Product.findOne({
         _id: productId,
+        inventory: inventory._id,
         status: GeneralUseStatus.ACTIVE
     }).then((product: IProduct) => {
         if (!product) {
