@@ -9,12 +9,12 @@ const productSchema = new Schema<IProduct>({
     },
     fields: {
         type: Object,
-        default: {}
+        required: true
     },
     status: {
         type: String,
         required: true
     }
-});
+}, { minimize: false });
 
 export const Product = model<IProduct>('product', productSchema);

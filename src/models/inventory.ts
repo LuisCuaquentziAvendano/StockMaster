@@ -8,7 +8,7 @@ const inventorySchema = new Schema<IInventory>({
     },
     fields: {
         type: Object,
-        default: {}
+        required: true
     },
     roles: {
         type: [
@@ -31,6 +31,6 @@ const inventorySchema = new Schema<IInventory>({
         type: String,
         required: true
     }
-});
+}, { minimize: false });
 
 export const Inventory = model<IInventory>('inventory', inventorySchema);

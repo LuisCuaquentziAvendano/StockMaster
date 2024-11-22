@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { startSession, mongo, UpdateWriteOpResult } from 'mongoose';
 import { User, Inventory, Product } from '../models';
-import { IInventory, FIELDS, IProduct, AssignedRole, IUser, insensitive } from '../types';
+import { IInventory, FIELDS, IProduct, AssignedRole, IUser, insensitive, InventoryFields } from '../types';
 import { InventoriesValidations } from './_inventoriesUtils';
 import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
@@ -73,6 +73,7 @@ export class InventoriesController {
         };
         const inventory: IInventory = {
             name,
+            fields: {} as InventoryFields,
             roles: [assignedRole],
             status: GeneralUseStatus.ACTIVE
         };

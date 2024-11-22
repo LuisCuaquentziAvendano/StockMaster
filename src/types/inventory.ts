@@ -7,7 +7,7 @@ import { InventoryDataTypes } from '../utils/inventoryDataTypes';
 export interface IInventory {
     _id?: Schema.Types.ObjectId;
     name: string;
-    fields?: InventoryFields,
+    fields: InventoryFields,
     roles: AssignedRole[],
     status: GeneralUseStatus
 }

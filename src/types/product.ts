@@ -5,7 +5,7 @@ import { InsensitiveString } from './insensitive';
 export interface IProduct {
     _id?: Schema.Types.ObjectId;
     inventory: Schema.Types.ObjectId;
-    fields?: ProductFields;
+    fields: ProductFields;
     status: GeneralUseStatus
 }
 
