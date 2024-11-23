@@ -1,6 +1,6 @@
 import { connect } from 'mongoose';
 import { app } from './app';
-import { socket } from "./controllers";
+import { socket } from './controllers';
 import { PORT, DB_URL } from './utils/envVariables';
 
 connect(DB_URL)

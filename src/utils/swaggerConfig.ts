@@ -1,4 +1,4 @@
-import { API_URL } from "./envVariables"
+import { API_URL } from './envVariables';
 
 export const swaggerConfig = {
     swaggerDefinition: {

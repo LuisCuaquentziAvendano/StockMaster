@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
 import BigNumber from 'bignumber.js';
+import { HTTP_STATUS_CODES } from '../utils/httpStatusCodes';
 import { SalesRecord, Sale } from '../models';
 import { isNativeType, NativeTypes } from '../utils/nativeTypes';
-import { ISale, ISalesRecord } from '../types';
-import { Schema, Types } from 'mongoose';
+import { ISalesRecord } from '../types';
 
 export class SalesRecordsController {
 /**
