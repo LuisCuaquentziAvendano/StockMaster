@@ -5,9 +5,6 @@ import { UserRoles } from '../utils/roles';
 
 const router = Router();
 
-router.get('/getSalesByParameter',
-    SalesRecordsController.getSalesByParameter);
-
 router.get('/getAllSalesRecords',
     SalesRecordsController.getAllSalesRecords);
 

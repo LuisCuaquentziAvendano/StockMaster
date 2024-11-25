@@ -50,9 +50,7 @@ export class SalesRecordsController {
  *           type: string
  *           example: "6709865e4441a6a26ba4bf10"
  */
-    static getSalesByParameter(req: Request, res: Response) {
-        const { parameterType, parameterId } = req.body;
-
+    static getSalesByParameter(parameterType: string, parameterId: string) {
         const searchCriteria: Record<string, any> = {};
         switch (parameterType) {
             case 'inventory':
@@ -65,8 +63,7 @@ export class SalesRecordsController {
                 searchCriteria['customer'] = parameterId;
                 break;
             default:
-                res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid parameter type' });
-                return;
+                throw new Error('Invalid parameter type');
         }
 
         return Sale.find(searchCriteria).exec();
@@ -114,21 +111,22 @@ export class SalesRecordsController {
  *           type: string
  *           example: "6709865e4441a6a26ba4bf10"
  */
-    static createSalesRecord(req: Request, res: Response): void {
+    static createSalesRecord(req: Request, res: Response) {
+        console.log("que esta sucediendo");
         if (!isNativeType(NativeTypes.OBJECT, req.body)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
             return;
         }
     
         const { parameterType, parameterId } = req.body;
-    
+        console.log("we are here");
         SalesRecordsController.getSalesByParameter(parameterType, parameterId)
         .then((sales) => {
             if (!sales || sales.length === 0) {
                 res.status(HTTP_STATUS_CODES.NOT_FOUND).send({ message: 'No sales found for this parameter' });
                 return;
             }
-
+            console.log(sales);
             const salesIds = sales.map(sale => sale._id);
             const totalSalesAmount = sales.reduce(
                 (sum, sale) => sum.plus(new BigNumber(sale.totalAmount)), 
