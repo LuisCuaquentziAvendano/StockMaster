@@ -7,6 +7,7 @@ import { SaleStatus } from '../utils/status';
 import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 import { STRIPE_KEY } from '../utils/envVariables';
 import { socket } from './socket.controller';
+import { EmailSender } from './_emailSender';
 
 const stripe = new Stripe(STRIPE_KEY); 
 
@@ -225,6 +226,16 @@ export class SalesController {
                     message: "A purchase refund has been made!",
                     refund: updatedSale
                 });
+
+                EmailSender.sendEmail(updatedSale.customer, 
+                    '[StockMaster] Your purchase has been succesfully refunded',
+                    `
+                    <h1>Succesful refund</h1>
+                    <p> Your purchase of ${updatedSale.totalAmount} has been refunded. The total amount of the purchase will be returned in full to the same payment method used to make the purchase in the next few days. </p>
+                    `,
+                    'HTML not supported'
+                )
+
                 res.status(HTTP_STATUS_CODES.SUCCESS).send(updatedSale);
             }
         })

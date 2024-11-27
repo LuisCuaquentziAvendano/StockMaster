@@ -6,50 +6,7 @@ import { isNativeType, NativeTypes } from '../utils/nativeTypes';
 import { ISalesRecord } from '../types';
 
 export class SalesRecordsController {
-/**
- * @swagger
- * /api/saleRecords/getSalesByParameter:
- *   post:
- *     tags: ["saleRecords"]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/GetSalesByParameter'
- *     responses:
- *       200:
- *         description: Sales retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/SalesRecord'
- *       400:
- *         description: Invalid parameter type
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Server error
- *
- * components:
- *   schemas:
- *     GetSalesByParameter:
- *       type: object
- *       properties:
- *         parameterType:
- *           type: string
- *           enum: ["inventory", "product", "customer"]
- *           example: "inventory"
- *         parameterId:
- *           type: string
- *           example: "6709865e4441a6a26ba4bf10"
- */
+
     static getSalesByParameter(parameterType: string, parameterId: string) {
         const searchCriteria: Record<string, any> = {};
         switch (parameterType) {
@@ -112,14 +69,18 @@ export class SalesRecordsController {
  *           example: "6709865e4441a6a26ba4bf10"
  */
     static createSalesRecord(req: Request, res: Response) {
-        console.log("que esta sucediendo");
         if (!isNativeType(NativeTypes.OBJECT, req.body)) {
             res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Body is not an object' });
             return;
         }
     
         const { parameterType, parameterId } = req.body;
-        console.log("we are here");
+
+        if(!parameterType || !parameterId) {
+            res.status(HTTP_STATUS_CODES.BAD_REQUEST).send({ error: 'Invalid sale data' });
+            return;
+        }
+
         SalesRecordsController.getSalesByParameter(parameterType, parameterId)
         .then((sales) => {
             if (!sales || sales.length === 0) {

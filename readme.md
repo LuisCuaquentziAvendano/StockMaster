@@ -26,3 +26,5 @@ Transpilar todos los archivos de TypeScript con el comando `npm run build`.
 ## Paso 5
 Iniciar la API con el comando `npm start`.
 
+# Pruebas
+Puede realizar las pruebas automaticas con el comando `npm run test`
