@@ -234,7 +234,7 @@ export class SalesController {
                     <p> Your purchase of ${updatedSale.totalAmount} has been refunded. The total amount of the purchase will be returned in full to the same payment method used to make the purchase in the next few days. </p>
                     `,
                     'HTML not supported'
-                )
+                );
 
                 res.status(HTTP_STATUS_CODES.SUCCESS).send(updatedSale);
             }
